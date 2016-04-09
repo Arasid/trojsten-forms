@@ -1,1 +1,28 @@
 dummy/db.sqlite3
+src/migrations
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+env/
+build/
+dist/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# dotenv
+.env
+
+# virtualenv
+venv/
+ENV/
+
+# Dependency directories
+node_modules
+
+# Optional npm cache directory
+.npm

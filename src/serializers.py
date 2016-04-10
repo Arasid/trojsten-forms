@@ -6,19 +6,21 @@ from django.contrib.auth.models import User
 class FormSerializer(serializers.ModelSerializer):
     class Meta:
         model = Form
-        fields = ('id', 'structure')
+        fields = ('id', 'title', 'structure')
 
 
-class QuestionSerializer(serializers.ModelSerializer):
+class QuestionSerializer(
+    serializers.ModelSerializer
+):
     class Meta:
         model = Question
-        fields = ('id', 'title')
+        fields = ('id', 'title', 'form', 'q_type', 'orgs')
 
 
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        fields = ('id', 'text', 'question')
+        fields = ('id', 'text', 'user', 'question')
 
 
 class UserSerializer(serializers.ModelSerializer):

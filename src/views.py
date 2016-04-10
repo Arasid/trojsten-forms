@@ -3,12 +3,12 @@ from .models import Question, Form, Answer
 from django.contrib.auth.models import User
 from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, UserSerializer
 
-
 class FormViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
 ):
     queryset = Form.objects.all()
     serializer_class = FormSerializer
@@ -18,6 +18,7 @@ class QuestionViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     viewsets.GenericViewSet
 ):
     queryset = Question.objects.all()
@@ -28,6 +29,7 @@ class AnswerViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     viewsets.GenericViewSet
 ):
     queryset = Answer.objects.all()
@@ -38,6 +40,7 @@ class UserViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     viewsets.GenericViewSet
 ):
     queryset = User.objects.all()

@@ -1,6 +1,7 @@
 from rest_framework import viewsets, mixins
 from .models import Question, Form, Answer
-from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer
+from django.contrib.auth.models import User
+from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, UserSerializer
 
 
 class FormViewSet(
@@ -31,3 +32,13 @@ class AnswerViewSet(
 ):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
+
+
+class UserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer

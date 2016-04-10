@@ -1,9 +1,14 @@
-from django.conf.urls import url
-from .views import QuestionViewSet, FormViewSet, AnswerViewSet
+from django.conf.urls import url, include
+from rest_framework import routers
+from .views import FormViewSet, QuestionViewSet, AnswerViewSet, UserViewSet
+
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'forms', FormViewSet)
+router.register(r'questions', QuestionViewSet)
+router.register(r'answers', AnswerViewSet)
 
 urlpatterns = [
-    url(r'^trojsten_forms/', FormViewSet.as_view({'get': 'list', 'post': 'create'})),
-    url(r'^trojsten_forms/forms/(?P<id>[0-9]+)/', FormViewSet.as_view({'get': 'retrieve'})),
-    url(r'^trojsten_forms/questions/(?P<id>[0-9]+)/', QuestionViewSet.as_view({'get': 'retrieve'})),
-    url(r'^trojsten_forms/answers/(?P<id>[0-9]+)/', AnswerViewSet.as_view({'get': 'retrieve'})),
+    url(r'^', include(router.urls)),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

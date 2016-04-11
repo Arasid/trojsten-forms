@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 
 class Form(models.Model):
     title = models.CharField(max_length=100)
+    deadline = models.DateTimeField()
     structure = models.CharField(max_length=2000)
 
     def __str__(self):

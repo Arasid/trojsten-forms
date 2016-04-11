@@ -1,35 +1,38 @@
 import path from 'path'
 
 const base = {
-  entry: {
-    main: path.join(__dirname, 'src', 'main.js'),
-  },
-  output: {
-    filename: '[name].bundle.js',
-    path: path.join(__dirname, 'build'),
-  },
-  module: {
-    loaders: [
-      {
-        test : /\.js$/,
-        include : path.join(__dirname, 'src'),
-        loader : 'babel-loader',
-        query : {
-          presets : ['es2015', 'react', 'stage-0']
-        }
-      },
-    ],
-  },
+    entry: {
+        main: path.join(__dirname, 'src', 'main.js'),
+        edit: path.join(__dirname, 'src', 'edit.js'),
+        fill: path.join(__dirname, 'src', 'fill.js'),
+        results: path.join(__dirname, 'src', 'results.js'),
+    },
+    output: {
+        filename: '[name].bundle.js',
+        path: path.join(__dirname, 'build'),
+    },
+    module: {
+        loaders: [
+        {
+            test : /\.js$/,
+            include : path.join(__dirname, 'src'),
+            loader : 'babel-loader',
+            query : {
+                presets : ['es2015', 'react', 'stage-0']
+            }
+        },
+        ],
+    },
 }
 
 export const webpack_production = {
-  ...base,
-  debug: false,
+    ...base,
+    debug: false,
 }
 
 export const webpack_development = {
-  ...base,
-  debug: true,
-  watch: true,
+    ...base,
+    debug: true,
+    watch: true,
 }
 

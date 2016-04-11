@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>Dummy</title>
+    </head>
+
+    <body>
+        <h1>Active forms</h1>
+        <ul>
+            {% for form in forms_active %}
+                <li>
+                    <a href="form/{{ form.id }}">{{ form.title }}</a> {{ form.deadline }}<br />
+                </li>
+            {% endfor %}
+        </ul>
+        <h1>Forms after deadline</h1>
+        <ul>
+            {% for form in forms_dead %}
+                <li>
+                    <a href="form/{{ form.id }}">{{ form.title }}</a> {{ form.deadline }}<br />
+                </li>
+            {% endfor %}
+        </ul>
+    </body>
+
+</html>

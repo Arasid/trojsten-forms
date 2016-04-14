@@ -4,15 +4,15 @@ from .models import Question, Form, Answer
 
 # Register your models here.
 class FormAdmin(admin.ModelAdmin):
-    list_display = ('title', 'deadline', 'structure',)
+    list_display = ('id', 'title', 'deadline', 'description', 'structure',)
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'description', 'q_type', 'form', 'get_orgs')
+    list_display = ('id', 'title', 'description', 'q_type', 'options', 'form', 'get_orgs')
 
 
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('question', 'user', 'text')
+    list_display = ('id', 'question', 'user', 'text')
 
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Form, FormAdmin)

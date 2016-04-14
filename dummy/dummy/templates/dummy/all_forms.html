@@ -1,0 +1,27 @@
+{% extends 'dummy/main.html' %}
+
+{% block content %}
+    <h1>Active forms</h1>
+    <a href="../create_form"> Create </a>
+    <ul>
+        {% for form in forms_active %}
+            <li>
+                {{ form.title }} {{ form.deadline }} 
+                    <a href="../edit_form/{{ form.id }}">Edit</a>
+                    <a href="../fill_form/{{ form.id }}">Fill</a>
+                    <a href="../results_form/{{ form.id }}">Results</a>
+                <br/>
+            </li>
+        {% endfor %}
+    </ul>
+    <h1>Forms after deadline</h1>
+    <ul>
+        {% for form in forms_dead %}
+            <li>
+                {{ form.title }} {{ form.deadline }} 
+                    <a href="../results_form/{{ form.id }}">Results</a>
+                <br/>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

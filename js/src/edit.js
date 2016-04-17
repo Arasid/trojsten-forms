@@ -5,6 +5,24 @@ import cookie from 'cookies-js'
 import { Well, Accordion, ButtonInput, Button, ListGroupItem, ListGroup, Col, Row, Input, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 
+class InputHeader extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    render(){
+        return (
+            <div>
+                <SmallInput label={this.props.titleLabel} value={this.props.title}
+                            placeholder={this.props.titlePlaceholder}
+                            handleChange={this.props.handleChange.bind(this, "title")} />
+                <SmallInput label={this.props.descriptionLabel} value={this.props.description}
+                            placeholder={this.props.descriptionPlaceholder}
+                            handleChange={this.props.handleChange.bind(this, "description")}
+                            bsSize="small"/>
+            </div>
+        )
+    }
+}
 
 class ShortAnswer extends React.Component{
     constructor(props) {
@@ -215,10 +233,15 @@ class Question extends React.Component{
         }
         return (
             <Panel className="form-group">
-                <SmallInput label="Question:" value={this.props.data.title} placeholder="Untitled question"
-                            handleChange={this.handleDataChange.bind(this, "title")}/>
-                <SmallInput label="Question description: " value={this.props.data.description} placeholder="Question description"
-                            handleChange={this.handleDataChange.bind(this, "description")}/>
+                <InputHeader
+                        title={this.props.data.title}
+                        titleLabel="Question:"
+                        titlePlaceholder="Untitled question"
+                        description={this.props.data.description}
+                        descriptionLabel="Question description:"
+                        descriptionPlaceholder="Question description"
+                        handleChange={this.handleDataChange.bind(this)}
+                />
                 <br/>
                 {opt}
                 <Panel header="Preview:" collapsible={true} in={false}>
@@ -262,12 +285,15 @@ class Section extends React.Component{
     render() {
         return (
             <Panel className="form-group">
-                <SmallInput label="Section name:" value={this.props.data.title} placeholder="Untitled section"
-                        ref="sectionTitle"
-                        handleChange={this.handleChange.bind(this, "title")}/>
-                <SmallInput label="Section description:" value={this.props.data.description} placeholder="Section description"
-                        ref="sectionDescription"
-                        handleChange={this.handleChange.bind(this, "description")}/>
+                <InputHeader
+                        title={this.props.data.title}
+                        titleLabel="Section name:"
+                        titlePlaceholder="Untitled section"
+                        description={this.props.data.description}
+                        descriptionLabel="Section description:"
+                        descriptionPlaceholder="Section description"
+                        handleChange={this.handleChange.bind(this)}
+                />
             </Panel>
         )
     }
@@ -304,18 +330,26 @@ class FormList extends React.Component{
                 node = <Section key={key} data={x.data} 
                                 handleChange={this.handleSectionChange.bind(this, key)}/>
             }
-            formNodes.push(node)
+            formNodes.push(
+                node
+            )
         }
         return (
-            <div className="form">
+            <form className="form" role="form" onSubmit={this.props.handleSubmit}>
                 <div className="form-group">
-                    <SmallInput label="Form title:" value={this.props.form_data.title} placeholder="Untitled form"
-                            handleChange={this.handleHeaderChange.bind(this, "title")}/>
-                    <SmallInput label="Form description:" value={this.props.form_data.description} placeholder="Form description"
-                            handleChange={this.handleHeaderChange.bind(this, "description")}/>
+                    <InputHeader
+                            title={this.props.form_data.title}
+                            titleLabel="Form title:"
+                            titlePlaceholder="Untitled form"
+                            description={this.props.form_data.description}
+                            descriptionLabel="Form description:"
+                            descriptionPlaceholder="Form description"
+                            handleChange={this.handleHeaderChange.bind(this)}
+                    />
                 </div>
                 {formNodes}
-            </div>
+                <ButtonInput type="submit" bsStyle="primary" value="Save" bsSize="large"/>
+            </form>
         )
     }
 }
@@ -341,6 +375,7 @@ class MyForm extends React.Component{
             questions_data: {},
             loaded: false
         }
+        this.getData = this.getData.bind(this)
     }
     loadQuestionsFromServer(form_data) {
         $.ajax({
@@ -354,7 +389,6 @@ class MyForm extends React.Component{
                     question.options = JSON.parse(question.options)
                     questions_data[question.id] = question
                 }
-                console.log("<>",JSON.stringify(questions_data))
                 this.setState({
                     form_data: form_data,
                     questions_data: questions_data, 
@@ -387,16 +421,69 @@ class MyForm extends React.Component{
             loaded: true
         })
     }
-    handleFormSubmit() {
-        //FIXME toto prosimta dokonci
-        let form_data = this.state.form_data
-        $.ajax({
-            //nieco
+    handleQuestionsSubmit(form_data) {
+        let questions_data = {}
+        var data, first = true
+        for (let key in this.state.questions_data) {
+            let question = this.state.questions_data[key]
+            question.options = JSON.stringify(question.options)
+            if (first) {
+                data = this.getData(key, question, questions_data)
+                first = false
+            } else {
+                (function (key, question) {
+                    data = data.then(function() {
+                        return this.getData(key, question, questions_data)
+                    }.bind(this))
+                }.bind(this)(key, question))
+            }
+        }
+        data.then(function() {
+            this.setState({ 
+                form_data: form_data,
+                questions_data: questions_data, 
+                loaded: true
+            })
+        }.bind(this))
+    }
+    getData(id, question, questions_data) {
+        return $.ajax({
+            url: "/api/question/"+id+"/",
+            dataType: 'json',
+            type: 'PUT',
+            data: JSON.stringify(question),
+            headers: {
+                "X-CSRFToken": cookie.get('csrftoken'),
+                "Content-Type":"application/json; charset=utf-8",
+            }
+        }).done(function(data) {
+            let new_question = data
+            new_question.options = JSON.parse(new_question.options)
+            questions_data[new_question.id] = new_question
+        }).fail(function(xhr, status, err) {
+            console.error("/api/question/"+id+"/", status, err.toString())
         })
-        let questions_data = this.state.questions_data
-        //FIXME treba zmenit na pole !!! bude vobec fungovat?
+    }
+    handleFormSubmit(event) {
+        event.preventDefault();
+        let form_data = this.state.form_data
+        form_data.structure = JSON.stringify(form_data.structure)
         $.ajax({
-            //nieco
+            url: "/api/form/"+this.props.form_id+"/",
+            dataType: 'json',
+            type: 'PUT',
+            data: JSON.stringify(form_data),
+            headers: {
+                "X-CSRFToken": cookie.get('csrftoken'),
+                "Content-Type":"application/json; charset=utf-8",
+            },
+            success: function(data) {
+                data.structure = JSON.parse(data.structure)
+                this.handleQuestionsSubmit(data)
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error("/api/form/"+this.props.form_id, status, err.toString());
+            }.bind(this)
         })
     }
     setDefaultState() {
@@ -417,11 +504,8 @@ class MyForm extends React.Component{
     render() {
         if (this.state.loaded) {
             return (
-                <form className="form" role="form">
-                    <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
-                                handleChange={this.handleChange.bind(this)}/>
-                    <ButtonInput type="submit" bsStyle="primary" value="Save" bsSize="large" onSubmit={() => this.handleFormSubmit()}/>
-                </form>
+                <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
+                            handleChange={this.handleChange.bind(this)} handleSubmit={(event) => this.handleFormSubmit(event)}/>
             )
         } else {
             return (

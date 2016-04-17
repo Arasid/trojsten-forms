@@ -8,9 +8,7 @@ class FormSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'deadline', 'structure', 'description')
 
 
-class QuestionSerializer(
-    serializers.ModelSerializer
-):
+class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ('id', 'title', 'description', 'form', 'q_type', 'options', 'orgs')

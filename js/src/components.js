@@ -45,9 +45,10 @@ export class SmallInput extends React.Component{
     }
     render() {
         return (
-            <Input type="text" standalone value={this.props.value} placeholder={this.props.placeholder} 
+            <Input type="text" value={this.props.value} placeholder={this.props.placeholder} 
                             disabled={this.props.disabled} label={this.props.label} help={this.props.help}
-                            onChange={(event) => this.handleChange(event)}/>
+                            onChange={(event) => this.handleChange(event)}
+                            bsSize={this.props.bsSize} bsStyle={this.props.bsStyle}/>
         )
     }
 }
@@ -62,9 +63,10 @@ export class BigInput extends React.Component{
     }
     render() {
         return (
-            <Input type="textarea" standalone value={this.state.value} placeholder={this.props.placeholder} 
+            <Input type="textarea" value={this.state.value} placeholder={this.props.placeholder} 
                             disabled={this.props.disabled} label={this.props.label} help={this.props.help}
-                            onChange={(event) => this.handleChange(event)}/>
+                            onChange={(event) => this.handleChange(event)}
+                            bsSize={this.props.bsSize} bsStyle={this.props.bsStyle}/>
         )
     }
 }

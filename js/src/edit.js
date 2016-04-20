@@ -282,7 +282,9 @@ class Question extends React.Component{
                     <ListGroupItem>
                         <Row>
                             <Col md={1}>
-                                <Button><span className="glyphicon glyphicon-trash" aria-hidden="true"></span></Button>
+                                <Button>
+                                    <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                </Button>
                             </Col>
                             <Col md={3}>
                                 <Input type="select" value={this.props.data.q_type} 
@@ -323,6 +325,13 @@ class Section extends React.Component{
                         descriptionPlaceholder="Section description"
                         handleChange={this.handleChange.bind(this)}
                 />
+                <ListGroup fill={true}>
+                    <ListGroupItem>
+                        <Button>
+                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                        </Button>
+                    </ListGroupItem>
+                </ListGroup>
             </Panel>
         )
     }

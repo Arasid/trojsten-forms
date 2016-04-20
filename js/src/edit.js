@@ -4,7 +4,7 @@ import $ from 'jquery'
 import cookie from 'cookies-js'
 import { AutoAffix } from 'react-overlays'
 import Waypoint from 'react-waypoint'
-import { ButtonGroup, Well, Accordion, ButtonInput, Button, ListGroupItem, ListGroup, Col, Row, Input, PanelGroup, Panel } from 'react-bootstrap'
+import { Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 
 class ScrollSpy extends React.Component {
@@ -28,7 +28,7 @@ class InputHeader extends React.Component{
     }
     render(){
         return (
-            <div>
+            <FormGroup>
                 <SmallInput label={this.props.titleLabel} value={this.props.title}
                             placeholder={this.props.titlePlaceholder}
                             handleChange={this.props.handleChange.bind(this, "title")} />
@@ -36,7 +36,7 @@ class InputHeader extends React.Component{
                             placeholder={this.props.descriptionPlaceholder}
                             handleChange={this.props.handleChange.bind(this, "description")}
                             bsSize="small"/>
-            </div>
+            </FormGroup>
         )
     }
 }
@@ -115,28 +115,28 @@ class ScalerOption extends React.Component{
         let hard_min = 0
         let all_min = [], all_max=[]
         for (let i=hard_min; i<parseInt(this.props.scaler.max); ++i) {
-            let node = <option className="form-group" key={i} value={i}>{i}</option>
+            let node = <option key={i} value={i}>{i}</option>
             all_min.push(node)
         }
         for (let i=parseInt(this.props.scaler.min)+1; i<=hard_max; ++i) {
-            let node = <option className="form-group" key={i} value={i}>{i}</option>
+            let node = <option key={i} value={i}>{i}</option>
             all_max.push(node)
         }
         return (
             <Row>
                 <Col md={3}>
-                    <Input groupClassName="group-class" value={this.props.scaler.min} label="from" type="select"
-                                    labelClassName="label-class inline"
+                    <ControlLabel>from</ControlLabel>
+                    <FormControl groupClassName="group-class" value={this.props.scaler.min} componentClass="select"
                                     onChange={(event)=>this.handleChange("min", event.target.value)}>
                         {all_min}
-                    </Input>
+                    </FormControl>
                 </Col>
                 <Col md={3}>
-                    <Input groupClassName="group-class" value={this.props.scaler.max} label="to" type="select"
-                                    labelClassName="label-class inline"
+                    <ControlLabel>to</ControlLabel>
+                    <FormControl groupClassName="group-class" value={this.props.scaler.max} componentClass="select"
                                     onChange={(event)=>this.handleChange("max", event.target.value) }>
                         {all_max}
-                    </Input>
+                    </FormControl>
                 </Col>
                 <Col md={3}>
                     <SmallInput value={this.props.scaler.label_min} placeholder="Label Min" disabled={false}
@@ -259,11 +259,11 @@ class Question extends React.Component{
                         descriptionPlaceholder="Question description"
                         handleChange={this.handleDataChange.bind(this)}
                 />
-                <br/>
                 {opt}
+                {opt && <br/>}
                 <Panel header="Preview:" collapsible={true} in={false}>
-                    <label className="control-label">{this.props.data.title}</label>
-                    <span className="help-block">{this.props.data.description}</span>
+                    <ControlLabel>{this.props.data.title}</ControlLabel>
+                    <HelpBlock>{this.props.data.description}</HelpBlock>
                     {ans}
                 </Panel>
                 <ListGroup fill={true}>
@@ -271,26 +271,26 @@ class Question extends React.Component{
                         <Row>
                             <Col md={1}>
                                 <Button>
-                                    <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                    <Glyphicon glyph="trash" />
                                 </Button>
                             </Col>
                             <Col md={4}>
-                                <Input type="select" value={this.props.data.q_type} 
+                                <FormControl componentClass="select" value={this.props.data.q_type} 
                                                     placeholder="select" onChange={(event)=>this.handleTypeChange(event)}>
                                     <option value="S">Short answer</option>
                                     <option value="L">Long answer</option>
                                     <option value="MC">Multiple choice</option>
                                     <option value="S1T">Scale with text answer</option>
                                     <option value="S2T">Two scales with text answer</option>
-                                </Input>
+                                </FormControl>
                             </Col>
                             <Col md={2} mdOffset={5}>
                                 <ButtonGroup>
                                     <Button onClick={this.props.handlePosition.bind(this, -1)}>
-                                        <span className="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                                        <Glyphicon glyph="chevron-up" />
                                     </Button>
                                     <Button onClick={this.props.handlePosition.bind(this, +1)}>
-                                        <span className="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                                        <Glyphicon glyph="chevron-down" />
                                     </Button>
                                 </ButtonGroup>
                             </Col>
@@ -328,16 +328,16 @@ class Section extends React.Component{
                         <Row>
                             <Col md={1}>
                                 <Button>
-                                    <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                    <Glyphicon glyph="trash" />
                                 </Button>
                             </Col>
                             <Col md={2} mdOffset={9}>
                                 <ButtonGroup>
                                     <Button onClick={this.props.handlePosition.bind(this, -1)}>
-                                        <span className="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                                        <Glyphicon glyph="chevron-up" />
                                     </Button>
                                     <Button onClick={this.props.handlePosition.bind(this, +1)}>
-                                        <span className="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                                        <Glyphicon glyph="chevron-down" />
                                     </Button>
                                 </ButtonGroup>
                             </Col>
@@ -428,7 +428,7 @@ class FormList extends React.Component{
         }
         return (
             <form className="form" role="form" onSubmit={this.props.handleSubmit}>
-                <div className="form-group">
+                <FormGroup>
                     <InputHeader
                             title={this.props.form_data.title}
                             titleLabel="Form title:"
@@ -438,9 +438,9 @@ class FormList extends React.Component{
                             descriptionPlaceholder="Form description"
                             handleChange={this.handleHeaderChange.bind(this)}
                     />
-                </div>
+                </FormGroup>
                 {formNodes}
-                <ButtonInput type="submit" bsStyle="primary" value="Save" bsSize="large"/>
+                <Button type="submit" bsStyle="primary" value="Save" bsSize="large"/>
             </form>
         )
     }

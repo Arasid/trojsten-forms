@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom"
 import $ from 'jquery'
 import cookie from 'cookies-js'
-import { Input, Button, ButtonGroup } from 'react-bootstrap'
+import { FormGroup, HelpBlock, ControlLabel, FormControl, Button, ButtonGroup } from 'react-bootstrap'
 
 export class Scaler extends React.Component {
     //bude stateless casom, ked budem robit fill
@@ -25,13 +25,13 @@ export class Scaler extends React.Component {
             scaleNodes.push(node)
         }
         return (
-            <div className="form-group text-center">
+            <FormGroup className="text-center">
                 <label>{this.props.options.label_min}&nbsp;</label>
                 <ButtonGroup>
                     {scaleNodes}
                 </ButtonGroup>
                 <label>&nbsp;{this.props.options.label_max}</label>
-            </div>
+            </FormGroup>
         )
     }
 }
@@ -45,10 +45,13 @@ export class SmallInput extends React.Component{
     }
     render() {
         return (
-            <Input type="text" value={this.props.value} placeholder={this.props.placeholder} 
-                            disabled={this.props.disabled} label={this.props.label} help={this.props.help}
-                            onChange={(event) => this.handleChange(event)}
+            <div>
+                {this.props.label && <ControlLabel>{this.props.label}</ControlLabel>}
+                {this.props.description && <HelpBlock>{this.props.description}</HelpBlock>}
+                <FormControl type="text" value={this.props.value} placeholder={this.props.placeholder} 
+                            disabled={this.props.disabled} onChange={(event) => this.handleChange(event)}
                             bsSize={this.props.bsSize} bsStyle={this.props.bsStyle}/>
+            </div>
         )
     }
 }
@@ -63,10 +66,13 @@ export class BigInput extends React.Component{
     }
     render() {
         return (
-            <Input type="textarea" value={this.state.value} placeholder={this.props.placeholder} 
-                            disabled={this.props.disabled} label={this.props.label} help={this.props.help}
-                            onChange={(event) => this.handleChange(event)}
+            <div>
+                {this.props.label && <ControlLabel>{this.props.label}</ControlLabel>}
+                {this.props.description && <HelpBlock>{this.props.description}</HelpBlock>}
+                <FormControl componentClass="textarea" value={this.state.value} placeholder={this.props.placeholder} 
+                            disabled={this.props.disabled} onChange={(event) => this.handleChange(event)}
                             bsSize={this.props.bsSize} bsStyle={this.props.bsStyle}/>
+            </div>
         )
     }
 }

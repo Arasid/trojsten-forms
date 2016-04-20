@@ -11,23 +11,11 @@ class ScrollSpy extends React.Component {
     constructor(props) {
         super(props)
     }
-    handleEnter(event) {
-        //idem smerom dole!
-        if (event.previousPosition === "above") {
-            this.props.setTopOrd(this.props.ord)
-        }
-    }
-    handleLeave(event) {
-        //idem smerom dole!
-        if (event.currentPosition === "above") {
-            this.props.setTopOrd(this.props.ord+1)
-        }
-    }
     render() {
         return (
             <Waypoint
-                onEnter = {this.handleEnter.bind(this)}
-                onLeave = {this.handleLeave.bind(this)}
+                onEnter = {this.props.handleBefore.bind(this)}
+                onLeave = {this.props.handleAfter.bind(this)}
                 threshold = {-0.02}
             />
         )
@@ -274,7 +262,7 @@ class Question extends React.Component{
                 <br/>
                 {opt}
                 <Panel header="Preview:" collapsible={true} in={false}>
-                    <label class="control-label">{this.props.data.title}</label>
+                    <label className="control-label">{this.props.data.title}</label>
                     <span className="help-block">{this.props.data.description}</span>
                     {ans}
                 </Panel>
@@ -286,7 +274,7 @@ class Question extends React.Component{
                                     <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                                 </Button>
                             </Col>
-                            <Col md={3}>
+                            <Col md={4}>
                                 <Input type="select" value={this.props.data.q_type} 
                                                     placeholder="select" onChange={(event)=>this.handleTypeChange(event)}>
                                     <option value="S">Short answer</option>
@@ -295,6 +283,16 @@ class Question extends React.Component{
                                     <option value="S1T">Scale with text answer</option>
                                     <option value="S2T">Two scales with text answer</option>
                                 </Input>
+                            </Col>
+                            <Col md={2} mdOffset={5}>
+                                <ButtonGroup>
+                                    <Button onClick={this.props.handlePosition.bind(this, -1)}>
+                                        <span className="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                                    </Button>
+                                    <Button onClick={this.props.handlePosition.bind(this, +1)}>
+                                        <span className="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                                    </Button>
+                                </ButtonGroup>
                             </Col>
                         </Row>
                     </ListGroupItem>
@@ -327,9 +325,23 @@ class Section extends React.Component{
                 />
                 <ListGroup fill={true}>
                     <ListGroupItem>
-                        <Button>
-                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                        </Button>
+                        <Row>
+                            <Col md={1}>
+                                <Button>
+                                    <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                </Button>
+                            </Col>
+                            <Col md={2} mdOffset={9}>
+                                <ButtonGroup>
+                                    <Button onClick={this.props.handlePosition.bind(this, -1)}>
+                                        <span className="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
+                                    </Button>
+                                    <Button onClick={this.props.handlePosition.bind(this, +1)}>
+                                        <span className="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                                    </Button>
+                                </ButtonGroup>
+                            </Col>
+                        </Row>
                     </ListGroupItem>
                 </ListGroup>
             </Panel>
@@ -340,6 +352,8 @@ class Section extends React.Component{
 class FormList extends React.Component{
     constructor(props) {
         super(props)
+        this.updateActiveTopOrd = this.updateActiveTopOrd.bind(this)
+        this.setActiveTopOrd = this.setActiveTopOrd.bind(this)
     }
     handleQuestionChange(id, data) {
         let questions_data = {...this.props.questions_data}
@@ -356,21 +370,57 @@ class FormList extends React.Component{
         form_data[key] = value
         this.props.handleChange(form_data, this.props.questions_data)
     }
+    handlePosition(ord, dir) {
+        let form_data = {...this.props.form_data}
+        let other = ord + dir
+        if (other < 0) { return }
+        if (other >= form_data.structure.length) { return }
+        let help = form_data.structure[other]
+        form_data.structure[other] = form_data.structure[ord]
+        form_data.structure[ord] = help
+        this.props.handleChange(form_data, this.props.questions_data)
+    }
+    setActiveTopOrd(ord) {
+        let activeTopOrd = ord
+        this.setState({ topOrd: activeTopOrd })
+    }
+    updateActiveTopOrd(ord) {
+        if (this.updateActiveTopOrdHandle != null) { return }
+        this.updateActiveTopOrdHandle = setTimeout(() => {
+            this.updateActiveTopOrdHandle = null
+            this.setActiveTopOrd(ord)
+        })
+    }
+    handleBefore(ord, event) {
+        //idem smerom dole!
+        if (event.previousPosition === "above") {
+            this.updateActiveTopOrd(ord)
+        }
+    }
+    handleAfter(ord, event) {
+        //idem smerom dole!
+        if (event.currentPosition === "above") {
+            this.updateActiveTopOrd(ord+1)
+        }
+    }
     render() {
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
-            let node = <ScrollSpy key={"spy"+key} ord={key} setTopOrd={this.props.setTopOrd} />
+            let node = <ScrollSpy key={"spy"+key} ord={key}
+                    handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
             formNodes.push(
                 node
             )
 
             if (x.type==='question') {
                 node = <Question key={key} data={this.props.questions_data[x.id]}
-                                handleChange={this.handleQuestionChange.bind(this, x.id)} />
+                                handleChange={this.handleQuestionChange.bind(this, x.id)}
+                                handlePosition={this.handlePosition.bind(this, key)} />
             } else if (x.type==='section') {
                 node = <Section key={key} data={x.data} 
-                                handleChange={this.handleSectionChange.bind(this, key)}/>
+                                handleChange={this.handleSectionChange.bind(this, key)}
+                                handlePosition={this.handlePosition.bind(this, key)} />
             }
             formNodes.push(
                 node
@@ -479,6 +529,7 @@ class MyForm extends React.Component{
         })
     }
     setTopOrd(ord) {
+        console.log(":(", ord)
         this.setState({
             topOrd: ord
         })

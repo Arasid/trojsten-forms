@@ -13,7 +13,8 @@
     "jquery": "^2.2.3",
     "react": "^15.0.1",
     "react-bootstrap": "^0.28.5",
-    "react-dom": "^15.0.1"
+    "react-dom": "^15.0.1",
+    "react-waypoint": "^2.0.1"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",

@@ -2,8 +2,37 @@ import React from "react"
 import ReactDOM from "react-dom"
 import $ from 'jquery'
 import cookie from 'cookies-js'
-import { Well, Accordion, ButtonInput, Button, ListGroupItem, ListGroup, Col, Row, Input, PanelGroup, Panel } from 'react-bootstrap'
+import { AutoAffix } from 'react-overlays'
+import Waypoint from 'react-waypoint'
+import { ButtonGroup, Well, Accordion, ButtonInput, Button, ListGroupItem, ListGroup, Col, Row, Input, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
+
+class ScrollSpy extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+    handleEnter(event) {
+        //idem smerom dole!
+        if (event.previousPosition === "above") {
+            this.props.setTopOrd(this.props.ord)
+        }
+    }
+    handleLeave(event) {
+        //idem smerom dole!
+        if (event.currentPosition === "above") {
+            this.props.setTopOrd(this.props.ord+1)
+        }
+    }
+    render() {
+        return (
+            <Waypoint
+                onEnter = {this.handleEnter.bind(this)}
+                onLeave = {this.handleLeave.bind(this)}
+                threshold = {-0.02}
+            />
+        )
+    }
+}
 
 class InputHeader extends React.Component{
     constructor(props) {
@@ -320,9 +349,13 @@ class FormList extends React.Component{
     }
     render() {
         let formNodes = []
-        for (let key in this.props.form_data.structure) {
+        for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
-            let node
+            let node = <ScrollSpy key={"spy"+key} ord={key} setTopOrd={this.props.setTopOrd} />
+            formNodes.push(
+                node
+            )
+
             if (x.type==='question') {
                 node = <Question key={key} data={this.props.questions_data[x.id]}
                                 handleChange={this.handleQuestionChange.bind(this, x.id)} />
@@ -354,6 +387,26 @@ class FormList extends React.Component{
     }
 }
 
+class SidePanel extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    render() {
+        return (
+            <AutoAffix viewportOffsetTop={20} container={this.props.getMain}>
+                <ButtonGroup vertical>
+                    <Button bsStyle="primary" onClick={this.props.handleAdd.bind(this, "question")}>
+                        <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Question
+                    </Button>
+                    <Button bsStyle="primary" onClick={this.props.handleAdd.bind(this, "section")}>
+                        <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Section
+                    </Button>
+                </ButtonGroup>
+            </AutoAffix>
+        )
+    }
+}
+
 class Loading extends React.Component{
     constructor(props) {
         super(props)
@@ -373,7 +426,9 @@ class MyForm extends React.Component{
         this.state = {
             form_data: {},
             questions_data: {},
-            loaded: false
+            loaded: false,
+            topOrd: 0,
+            newQID: -1
         }
         this.getData = this.getData.bind(this)
     }
@@ -414,39 +469,101 @@ class MyForm extends React.Component{
             }.bind(this)
         })
     }
+    setTopOrd(ord) {
+        this.setState({
+            topOrd: ord
+        })
+    }
+    addSomething(type) {
+        let state = {...this.state}
+        let new_something
+        if (type === "section") {
+            new_something = {
+                type: "section",
+                data: {
+                    description: "",
+                    title: ""
+                } 
+            }
+        } else {
+            new_something = {
+                type: "question",
+                id: state.newQID
+            }
+            let new_data = {
+                title: "",
+                description: "",
+                orgs: [],
+                options: {},
+                q_type: "S",
+                form: this.props.form_id
+            }
+            state.questions_data[state.newQID] = new_data
+        }
+        state.form_data.structure.splice(state.topOrd,0,new_something)
+        state.newQID = state.newQID - 1
+        this.setState(state)
+    }
     handleChange(form_data, questions_data) {
         this.setState({
             form_data: form_data,
-            questions_data: questions_data,
-            loaded: true
+            questions_data: questions_data
         })
     }
-    handleQuestionsSubmit(form_data) {
+    handleFormSubmit(event) {
+        event.preventDefault();
         let questions_data = {}
-        var data, first = true
-        for (let key in this.state.questions_data) {
-            let question = this.state.questions_data[key]
-            question.options = JSON.stringify(question.options)
-            if (first) {
-                data = this.getData(key, question, questions_data)
-                first = false
-            } else {
-                (function (key, question) {
-                    data = data.then(function() {
-                        return this.getData(key, question, questions_data)
-                    }.bind(this))
-                }.bind(this)(key, question))
+        let form_data = {...this.state.form_data}
+        let form_id = this.props.form_id
+        let data, first = true
+        for (let ord=0; ord<form_data.structure.length; ord++) {
+            let thing = form_data.structure[ord]
+            if (thing.type === "question") {
+                let key = thing.id
+                let question = this.state.questions_data[key]
+                question.options = JSON.stringify(question.options)
+                if (first) {
+                    data = this.getData(key, question, questions_data, thing)
+                    first = false
+                } else {
+                    (function (key, question) {
+                        data = data.then(function() {
+                            return this.getData(key, question, questions_data, thing)
+                        }.bind(this))
+                    }.bind(this)(key, question))
+                }
             }
         }
         data.then(function() {
+            form_data.structure = JSON.stringify(form_data.structure)
+            return $.ajax({
+                url: "/api/form/"+form_id+"/",
+                dataType: 'json',
+                type: 'PUT',
+                data: JSON.stringify(form_data),
+                headers: {
+                    "X-CSRFToken": cookie.get('csrftoken'),
+                    "Content-Type":"application/json; charset=utf-8",
+                }
+            }).done(function(data) {
+                data.structure = JSON.parse(data.structure)
+                form_data = data
+            }).fail(function(xhr, status, err) {
+                console.error("/api/form/"+form_id, status, err.toString());
+            })
+        }).then(function() {
             this.setState({ 
                 form_data: form_data,
                 questions_data: questions_data, 
-                loaded: true
+                newQID: -1
             })
         }.bind(this))
     }
-    getData(id, question, questions_data) {
+    getData(key, question, questions_data, thing) {
+        if (key > 0) { return this.updateQuestion(key, question, questions_data) }
+        else { return this.postNewQuestion(question, questions_data, thing) }
+    }
+    updateQuestion(id, question, questions_data) {
         return $.ajax({
             url: "/api/question/"+id+"/",
             dataType: 'json',
@@ -464,35 +581,38 @@ class MyForm extends React.Component{
             console.error("/api/question/"+id+"/", status, err.toString())
         })
     }
-    handleFormSubmit(event) {
-        event.preventDefault();
-        let form_data = this.state.form_data
-        form_data.structure = JSON.stringify(form_data.structure)
-        $.ajax({
-            url: "/api/form/"+this.props.form_id+"/",
+    postNewQuestion(question, questions_data, thing) {
+        return $.ajax({
+            url: "/api/question/",
             dataType: 'json',
-            type: 'PUT',
-            data: JSON.stringify(form_data),
+            type: 'POST',
+            data: JSON.stringify(question),
             headers: {
                 "X-CSRFToken": cookie.get('csrftoken'),
                 "Content-Type":"application/json; charset=utf-8",
-            },
-            success: function(data) {
-                data.structure = JSON.parse(data.structure)
-                this.handleQuestionsSubmit(data)
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error("/api/form/"+this.props.form_id, status, err.toString());
-            }.bind(this)
+            }
+        }).done(function(data) {
+            let new_question = data
+            new_question.options = JSON.parse(new_question.options)
+            questions_data[new_question.id] = new_question
+            thing.id = new_question.id
+        }).fail(function(xhr, status, err) {
+            console.error("/api/question/", status, err.toString())
         })
     }
     setDefaultState() {
         let form_data = {
             "title": "Untitled form",
             "description": "",
-            "structure": {}
+            "structure": []
         }
-        this.setState({form_data: form_data, questions_data: {}, loaded: true})
+        this.setState({
+            form_data: form_data,
+            questions_data: {},
+            topOrd: 0,
+            newQID: -1,
+            loaded: true
+        })
     }
     componentDidMount() {
         if (this.props.create) {
@@ -501,11 +621,22 @@ class MyForm extends React.Component{
             this.loadFormFromServer()
         }
     }
+    getMain() {
+       return this.refs.main
+    }
     render() {
         if (this.state.loaded) {
             return (
-                <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
+                <Row ref="main">
+                    <Col md={10}>
+                        <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
+                            setTopOrd={this.setTopOrd.bind(this)}
                             handleChange={this.handleChange.bind(this)} handleSubmit={(event) => this.handleFormSubmit(event)}/>
+                    </Col>
+                    <Col md={2}>
+                        <SidePanel getMain={this.getMain.bind(this)} handleAdd={this.addSomething.bind(this)}/>
+                    </Col>
+                </Row>
             )
         } else {
             return (

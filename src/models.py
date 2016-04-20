@@ -24,12 +24,12 @@ class Question(models.Model):
     )
 
     title = models.CharField(max_length=200)
-    description = models.CharField(max_length=1000)
+    description = models.CharField(max_length=1000, blank=True)
     form = models.ForeignKey(Form)
     q_type = models.CharField(max_length=100, choices=Q_TYPES, default='S')
     # options bude obsahovat required
     options = models.CharField(max_length=1000, default="{}")
-    orgs = models.ManyToManyField(User)
+    orgs = models.ManyToManyField(User, blank=True)
 
     def get_orgs(self):
         return ", ".join([str(o) for o in self.orgs.all()])

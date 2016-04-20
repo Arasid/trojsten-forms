@@ -1,4 +1,5 @@
 from rest_framework import viewsets, mixins, generics
+from rest_framework.permissions import IsAuthenticated
 from .models import Question, Form, Answer
 from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer
 
@@ -12,6 +13,7 @@ class FormViewSet(
 ):
     queryset = Form.objects.all()
     serializer_class = FormSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class QuestionViewSet(
@@ -23,6 +25,7 @@ class QuestionViewSet(
 ):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class QuestionList(generics.ListAPIView):

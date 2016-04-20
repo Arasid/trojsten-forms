@@ -4,7 +4,7 @@ import $ from 'jquery'
 import cookie from 'cookies-js'
 import { AutoAffix } from 'react-overlays'
 import Waypoint from 'react-waypoint'
-import { Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
+import { Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 
 class ScrollSpy extends React.Component {
@@ -29,9 +29,11 @@ class InputHeader extends React.Component{
     render(){
         return (
             <FormGroup>
-                <SmallInput label={this.props.titleLabel} value={this.props.title}
-                            placeholder={this.props.titlePlaceholder}
-                            handleChange={this.props.handleChange.bind(this, "title")} />
+                <FormGroup validationState={this.props.title.length > 0 ? "success" : "error"}>
+                    <SmallInput label={this.props.titleLabel} value={this.props.title}
+                                placeholder={this.props.titlePlaceholder}
+                                handleChange={this.props.handleChange.bind(this, "title")} />
+                </FormGroup>
                 <SmallInput label={this.props.descriptionLabel} value={this.props.description}
                             placeholder={this.props.descriptionPlaceholder}
                             handleChange={this.props.handleChange.bind(this, "description")}
@@ -427,7 +429,7 @@ class FormList extends React.Component{
             )
         }
         return (
-            <form className="form" role="form" onSubmit={this.props.handleSubmit}>
+            <Form onSubmit={this.props.handleSubmit}>
                 <FormGroup>
                     <InputHeader
                             title={this.props.form_data.title}
@@ -440,8 +442,8 @@ class FormList extends React.Component{
                     />
                 </FormGroup>
                 {formNodes}
-                <Button type="submit" bsStyle="primary" value="Save" bsSize="large"/>
-            </form>
+                <Button type="submit" bsStyle="primary" bsSize="large">Save</Button>
+            </Form>
         )
     }
 }

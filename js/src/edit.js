@@ -382,7 +382,7 @@ class FormList extends React.Component{
     }
     setActiveTopOrd(ord) {
         let activeTopOrd = ord
-        this.setState({ topOrd: activeTopOrd })
+        this.props.setTopOrd(ord)
     }
     updateActiveTopOrd(ord) {
         if (this.updateActiveTopOrdHandle != null) { return }
@@ -529,7 +529,6 @@ class MyForm extends React.Component{
         })
     }
     setTopOrd(ord) {
-        console.log(":(", ord)
         this.setState({
             topOrd: ord
         })

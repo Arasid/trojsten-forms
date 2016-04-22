@@ -275,7 +275,7 @@ class Question extends React.Component{
                     <ListGroupItem>
                         <Row>
                             <Col md={1}>
-                                <Button>
+                                <Button onClick={this.props.handleDelete.bind(this)}>
                                     <Glyphicon glyph="trash" />
                                 </Button>
                             </Col>
@@ -332,7 +332,7 @@ class Section extends React.Component{
                     <ListGroupItem>
                         <Row>
                             <Col md={1}>
-                                <Button>
+                                <Button onClick={this.props.handleDelete.bind(this)}>
                                     <Glyphicon glyph="trash" />
                                 </Button>
                             </Col>
@@ -368,6 +368,11 @@ class FormList extends React.Component{
     handleSectionChange(key, data) {
         let form_data = {...this.props.form_data}
         form_data.structure[key].data = data
+        this.props.handleChange(form_data, this.props.questions_data)
+    }
+    handleDelete(key) {
+        let form_data = {...this.props.form_data}
+        form_data.structure[key].removed = true
         this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeaderChange(key, value){
@@ -417,24 +422,28 @@ class FormList extends React.Component{
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
-            let node = <ScrollSpy key={"spy"+key} ord={key}
-                    handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
-            formNodes.push(
-                node
-            )
+            if (!x.removed) {
+                let node = <ScrollSpy key={"spy"+key} ord={key}
+                        handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
+                formNodes.push(
+                    node
+                )
 
-            if (x.type==='question') {
-                node = <Question key={key} data={this.props.questions_data[x.id]}
-                                handleChange={this.handleQuestionChange.bind(this, x.id)}
-                                handlePosition={this.handlePosition.bind(this, key)} />
-            } else if (x.type==='section') {
-                node = <Section key={key} data={x.data} 
-                                handleChange={this.handleSectionChange.bind(this, key)}
-                                handlePosition={this.handlePosition.bind(this, key)} />
+                if (x.type==='question') {
+                    node = <Question key={key} data={this.props.questions_data[x.id]}
+                                    handleChange={this.handleQuestionChange.bind(this, x.id)}
+                                    handlePosition={this.handlePosition.bind(this, key)}
+                                    handleDelete={this.handleDelete.bind(this, key)}/>
+                } else if (x.type==='section') {
+                    node = <Section key={key} data={x.data} 
+                                    handleChange={this.handleSectionChange.bind(this, key)}
+                                    handlePosition={this.handlePosition.bind(this, key)}
+                                    handleDelete={this.handleDelete.bind(this, key)}/>
+                }
+                formNodes.push(
+                    node
+                )
             }
-            formNodes.push(
-                node
-            )
         }
         return (
             <Form onSubmit={this.props.handleSubmit}>
@@ -593,6 +602,8 @@ class MyForm extends React.Component{
         //rozdel otazky na stare nove
         let old_questions = []
         let new_questions = []
+        let del_questions = []
+        let new_structure = []
         for (let ord=0; ord<state.form_data.structure.length; ord++) {
             let thing = state.form_data.structure[ord]
             if (thing.type === "question") {
@@ -600,12 +611,22 @@ class MyForm extends React.Component{
                 let question = state.questions_data[key]
                 question.options = JSON.stringify(question.options)
                 if (key > 0) {
-                    old_questions.push(question)
+                    if (thing.removed) {
+                        del_questions.push(question.id)
+                    } else {
+                        old_questions.push(question)
+                    }
                 } else {
-                    new_questions.push(question)
+                    if (!thing.removed) {
+                        new_questions.push(question)
+                    }
                 }
             }
+            if (!thing.removed) {
+                new_structure.push(thing)
+            }
         }
+        state.form_data.structure = new_structure
 
         let promise
         if (!state.created) {
@@ -702,7 +723,24 @@ class MyForm extends React.Component{
             state.questions_data = questions_data
             state.newQID = -1
             this.setState(state)
-        }.bind(this))
+        }.bind(this)).then(function(){
+            let promise = $.Deferred()
+            for (let i = 0; i<del_questions.length; i++) {
+                promise = promise.then(function(id){
+                    return $.ajax({
+                        url: "/api/question/"+id,
+                        type: 'DELETE',
+                        headers: {
+                            "X-CSRFToken": cookie.get('csrftoken'),
+                            "Content-Type":"application/json; charset=utf-8",
+                        }
+                    }).fail(function(xhr, status, err) {
+                        console.error("/api/question/"+id, status, err.toString())
+                    })
+                }(del_questions[i]))
+            }
+            return promise
+        })
     }
     setDefaultState() {
         let deadline = moment().add(1, 'month');

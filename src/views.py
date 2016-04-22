@@ -1,7 +1,8 @@
 from rest_framework import viewsets, mixins, generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
 from .models import Question, Form, Answer
-from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer
+from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, QuestionSerializerBulk
 
 
 class FormViewSet(
@@ -30,8 +31,10 @@ class QuestionViewSet(
     permission_classes = (IsAuthenticated,)
 
 
-class QuestionList(generics.ListAPIView):
-    serializer_class = QuestionSerializer
+class QuestionList(
+    ListBulkCreateUpdateDestroyAPIView
+):
+    serializer_class = QuestionSerializerBulk
 
     def get_queryset(self):
         form = self.kwargs['form']

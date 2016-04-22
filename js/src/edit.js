@@ -6,6 +6,9 @@ import { AutoAffix } from 'react-overlays'
 import Waypoint from 'react-waypoint'
 import { Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
+import DateTimeField from "react-bootstrap-datetimepicker"
+import 'react-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'
+import moment from 'moment'
 
 class ScrollSpy extends React.Component {
     constructor(props) {
@@ -405,6 +408,11 @@ class FormList extends React.Component{
             this.updateActiveTopOrd(ord+1)
         }
     }
+    handleDeadline(deadline) {
+        let form_data = {...this.props.form_data}
+        form_data.deadline = deadline
+        this.props.handleChange(form_data, this.props.questions_data)
+    }
     render() {
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
@@ -440,6 +448,13 @@ class FormList extends React.Component{
                             descriptionPlaceholder="Form description"
                             handleChange={this.handleHeaderChange.bind(this)}
                     />
+                    <DateTimeField
+                          dateTime={this.props.form_data.deadline}
+                          format={"YYYY-MM-DDTHH:mm:ssZ"}
+                          viewMode={"date"}
+                          inputFormat={"DD.MM.YYYY HH:mm"}
+                          onChange={this.handleDeadline.bind(this)}
+                        />
                 </FormGroup>
                 {formNodes}
                 <Button type="submit" bsStyle="primary" bsSize="large">Save</Button>
@@ -489,9 +504,9 @@ class MyForm extends React.Component{
             questions_data: {},
             loaded: false,
             topOrd: 0,
-            newQID: -1
+            newQID: -1,
+            created: true
         }
-        this.getData = this.getData.bind(this)
     }
     loadQuestionsFromServer(form_data) {
         $.ajax({
@@ -552,12 +567,13 @@ class MyForm extends React.Component{
                 id: state.newQID
             }
             let new_data = {
+                id: state.newQID,
                 title: "",
                 description: "",
                 orgs: [],
                 options: {},
                 q_type: "S",
-                form: this.props.form_id
+                form: this.state.form_data.id
             }
             state.questions_data[state.newQID] = new_data
         }
@@ -572,107 +588,140 @@ class MyForm extends React.Component{
         })
     }
     handleFormSubmit(event) {
-        event.preventDefault();
+        event.preventDefault()
+        let state = {...this.state}
         let questions_data = {}
-        let form_data = {...this.state.form_data}
-        let form_id = this.props.form_id
-        let data, first = true
-        for (let ord=0; ord<form_data.structure.length; ord++) {
-            let thing = form_data.structure[ord]
+
+        //rozdel otazky na stare nove
+        let old_questions = []
+        let new_questions = []
+        for (let ord=0; ord<state.form_data.structure.length; ord++) {
+            let thing = state.form_data.structure[ord]
             if (thing.type === "question") {
                 let key = thing.id
-                let question = this.state.questions_data[key]
+                let question = state.questions_data[key]
                 question.options = JSON.stringify(question.options)
-                if (first) {
-                    data = this.getData(key, question, questions_data, thing)
-                    first = false
+                if (key > 0) {
+                    old_questions.push(question)
                 } else {
-                    (function (key, question) {
-                        data = data.then(function() {
-                            return this.getData(key, question, questions_data, thing)
-                        }.bind(this))
-                    }.bind(this)(key, question))
+                    new_questions.push(question)
                 }
             }
         }
-        data.then(function() {
-            form_data.structure = JSON.stringify(form_data.structure)
-            return $.ajax({
-                url: "/api/form/"+form_id+"/",
+
+        let promise
+        if (!state.created) {
+            state.form_data.structure = JSON.stringify(state.form_data.structure)
+            //vytvorim novy form
+            promise = $.ajax({
+                url: "/api/form/",
                 dataType: 'json',
-                type: 'PUT',
-                data: JSON.stringify(form_data),
+                type: 'POST',
+                data: JSON.stringify(state.form_data),
                 headers: {
                     "X-CSRFToken": cookie.get('csrftoken'),
                     "Content-Type":"application/json; charset=utf-8",
                 }
             }).done(function(data) {
                 data.structure = JSON.parse(data.structure)
-                form_data = data
+                state.form_data = data
+                state.created = true
+                for (let i = 0; i<new_questions.length; i++) {
+                    new_questions[i].form = state.form_data.id
+                }
             }).fail(function(xhr, status, err) {
-                console.error("/api/form/"+form_id, status, err.toString());
+                console.error("/api/form/", status, err.toString())
             })
-        }).then(function() {
-            this.setState({ 
-                form_data: form_data,
-                questions_data: questions_data, 
-                newQID: -1
+        } else {
+            //submitnem stare otazky
+            promise = $.ajax({
+                url: "/api/questions/" + state.form_data.id+"/",
+                dataType: 'json',
+                type: 'PUT',
+                data: JSON.stringify(old_questions),
+                headers: {
+                    "X-CSRFToken": cookie.get('csrftoken'),
+                    "Content-Type":"application/json; charset=utf-8",
+                }
+            }).done(function(data) {
+                for (let i = 0; i<data.length; ++i) {
+                    let question = data[i]
+                    question.options = JSON.parse(question.options)
+                    questions_data[question.id] = question
+                }
+            }).fail(function(xhr, status, err) {
+                console.error("/api/questions/"+this.props.form_id+"/", status, err.toString())
             })
+        }
+        promise.then( function() {
+            return $.ajax({
+                url: "/api/questions/"+state.form_data.id+"/",
+                dataType: 'json',
+                type: 'POST',
+                data: JSON.stringify(new_questions),
+                headers: {
+                    "X-CSRFToken": cookie.get('csrftoken'),
+                    "Content-Type":"application/json; charset=utf-8",
+                }
+            }).done(function(data) {
+                let map_new = {}
+                for (let i = 0; i<data.length; ++i) {
+                    let question = data[i]
+                    question.options = JSON.parse(question.options)
+                    questions_data[question.id] = question
+                    map_new[new_questions[i].id] = question.id
+                }
+                for (let ord=0; ord<state.form_data.structure.length; ord++) {
+                    let thing = state.form_data.structure[ord]
+                    if (thing.type === "question") {
+                        let key = thing.id
+                        if (key < 0) {
+                            state.form_data.structure[ord].id = map_new[key]
+                        }
+                    }
+                }
+            }).fail(function(xhr, status, err) {
+                console.error("/api/questions/"+this.state.form_data.id+"/", status, err.toString())
+            })
+        }).then( function() {
+            state.form_data.structure = JSON.stringify(state.form_data.structure)
+            return $.ajax({
+                url: "/api/form/"+state.form_data.id+"/",
+                dataType: 'json',
+                type: 'PUT',
+                data: JSON.stringify(state.form_data),
+                headers: {
+                    "X-CSRFToken": cookie.get('csrftoken'),
+                    "Content-Type":"application/json; charset=utf-8",
+                }
+            }).done(function(data) {
+                data.structure = JSON.parse(data.structure)
+                state.form_data = data
+            }).fail(function(xhr, status, err) {
+                console.error("/api/form/"+state.form_data.id+"/", status, err.toString())
+            })
+        }).then(function(){
+            state.questions_data = questions_data
+            state.newQID = -1
+            this.setState(state)
         }.bind(this))
     }
-    getData(key, question, questions_data, thing) {
-        if (key > 0) { return this.updateQuestion(key, question, questions_data) }
-        else { return this.postNewQuestion(question, questions_data, thing) }
-    }
-    updateQuestion(id, question, questions_data) {
-        return $.ajax({
-            url: "/api/question/"+id+"/",
-            dataType: 'json',
-            type: 'PUT',
-            data: JSON.stringify(question),
-            headers: {
-                "X-CSRFToken": cookie.get('csrftoken'),
-                "Content-Type":"application/json; charset=utf-8",
-            }
-        }).done(function(data) {
-            let new_question = data
-            new_question.options = JSON.parse(new_question.options)
-            questions_data[new_question.id] = new_question
-        }).fail(function(xhr, status, err) {
-            console.error("/api/question/"+id+"/", status, err.toString())
-        })
-    }
-    postNewQuestion(question, questions_data, thing) {
-        return $.ajax({
-            url: "/api/question/",
-            dataType: 'json',
-            type: 'POST',
-            data: JSON.stringify(question),
-            headers: {
-                "X-CSRFToken": cookie.get('csrftoken'),
-                "Content-Type":"application/json; charset=utf-8",
-            }
-        }).done(function(data) {
-            let new_question = data
-            new_question.options = JSON.parse(new_question.options)
-            questions_data[new_question.id] = new_question
-            thing.id = new_question.id
-        }).fail(function(xhr, status, err) {
-            console.error("/api/question/", status, err.toString())
-        })
-    }
     setDefaultState() {
+        let deadline = moment().add(1, 'month');
         let form_data = {
-            "title": "Untitled form",
-            "description": "",
-            "structure": []
+            title: "Untitled form",
+            description: "",
+            structure: [],
+            deadline: deadline.format("YYYY-MM-DDTHH:mm:ssZ")
         }
         this.setState({
             form_data: form_data,
             questions_data: {},
             topOrd: 0,
             newQID: -1,
-            loaded: true
+            loaded: true,
+            form_id: -1,
+            created: false
         })
     }
     componentDidMount() {

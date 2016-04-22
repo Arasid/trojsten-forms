@@ -10,11 +10,14 @@
   "license": "ISC",
   "dependencies": {
     "cookies-js": "^1.2.2",
+    "css-loader": "^0.23.1",
     "jquery": "^2.2.3",
     "react": "^15.0.1",
     "react-bootstrap": "^0.29.0",
+    "react-bootstrap-datetimepicker": "0.0.22",
     "react-dom": "^15.0.1",
-    "react-waypoint": "^2.0.1"
+    "react-waypoint": "^2.0.1",
+    "style-loader": "^0.13.1"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",

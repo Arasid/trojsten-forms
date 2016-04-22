@@ -508,42 +508,40 @@ class MyForm extends React.Component{
             created: true
         }
     }
-    loadQuestionsFromServer(form_data) {
-        $.ajax({
-            url: "/api/questions/" + this.props.form_id,
+    loadFormFromServer() {
+        let firstPromise = $.ajax({
+            url: "/api/questions/" + this.props.form_id + "/",
             dataType: 'json',
             cache: false,
-            success: function(data) {
-                let questions_data = {}
-                for (let i = 0; i<data.length; ++i) {
-                    let question = data[i]
-                    question.options = JSON.parse(question.options)
-                    questions_data[question.id] = question
-                }
-                this.setState({
-                    form_data: form_data,
-                    questions_data: questions_data, 
-                    loaded: true
-                })
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error("/api/questions/"+this.props.form_id, status, err.toString())
-            }.bind(this)
-        })
-    }
-    loadFormFromServer() {
-        $.ajax({
+        }).fail( function(xhr, status, err) {
+            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString());
+        }.bind(this))
+        let secondPromise = $.ajax({
             url: "/api/form/" + this.props.form_id,
             dataType: 'json',
             cache: false,
-            success: function(form_data) {
-                form_data.structure = JSON.parse(form_data.structure)
-                this.loadQuestionsFromServer(form_data)
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error("/api/form/" + this.props.form_id, status, err.toString())
-            }.bind(this)
-        })
+        }).fail( function(xhr, status, err) {
+            console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
+        }.bind(this))
+
+        $.when(firstPromise, secondPromise).done(function(firstData, secondData) {
+            let data, form_data, questions_data = {}
+            data = firstData[0]
+            form_data = secondData[0]
+
+            for (let i = 0; i<data.length; ++i) {
+                let question = data[i]
+                question.options = JSON.parse(question.options)
+                questions_data[question.id] = question
+            }
+            form_data.structure = JSON.parse(form_data.structure)
+
+            this.setState({
+                questions_data: questions_data,
+                form_data: form_data,
+                loaded: true
+            })
+        }.bind(this))
     }
     setTopOrd(ord) {
         this.setState({

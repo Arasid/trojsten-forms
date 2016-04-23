@@ -53,7 +53,9 @@ class AnswerViewSet(
     serializer_class = AnswerSerializer
 
 
-class AnswerList(generics.ListAPIView):
+class AnswerList(
+    ListBulkCreateUpdateDestroyAPIView
+):
     serializer_class = AnswerSerializer
 
     def get_queryset(self):

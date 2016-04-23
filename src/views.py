@@ -60,7 +60,7 @@ class AnswerViewSet(
         serializer.save(user=self.request.user)
 
 
-class AnswerList(
+class UserAnswerList(
     ListBulkCreateUpdateDestroyAPIView
 ):
     serializer_class = AnswerSerializerBulk
@@ -69,3 +69,13 @@ class AnswerList(
         user = self.request.user
         form = self.kwargs['form']
         return Answer.objects.filter(user=user, question__form=form)
+
+
+class AnswerList(
+    ListBulkCreateUpdateDestroyAPIView
+):
+    serializer_class = AnswerSerializerBulk
+
+    def get_queryset(self):
+        form = self.kwargs['form']
+        return Answer.objects.filter(question__form=form)

@@ -231,11 +231,11 @@ class MyForm extends React.Component{
             console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
         }.bind(this))
         let thirdPromise = $.ajax({
-            url: "/api/answers/" + this.props.form_id + "/",
+            url: "/api/user_answers/" + this.props.form_id + "/",
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
-            console.error("/api/answers/"+this.props.form_id+"/", status, err.toString());
+            console.error("/api/user_answers/"+this.props.form_id+"/", status, err.toString());
         }.bind(this))
 
         $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {

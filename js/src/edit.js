@@ -4,10 +4,12 @@ import $ from 'jquery'
 import cookie from 'cookies-js'
 import { AutoAffix } from 'react-overlays'
 import Waypoint from 'react-waypoint'
+import Select from 'react-select'
 import { Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 import DateTimeField from "react-bootstrap-datetimepicker"
 import 'react-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'
+import 'react-select/dist/react-select.min.css'
 import moment from 'moment'
 
 class ScrollSpy extends React.Component {
@@ -225,6 +227,15 @@ class Question extends React.Component{
         data[key] = value
         this.props.handleChange(data)
     }
+    handleOrgsChange(all) {
+        let data = {...this.props.data}
+        let orgs = []
+        for (let i = 0; i<all.length; i++) {
+            orgs.push(all[i].value)
+        }
+        data.orgs = orgs
+        this.props.handleChange(data)
+    }
     render() {
         let ans
         let opt
@@ -264,6 +275,9 @@ class Question extends React.Component{
                         descriptionPlaceholder="Question description"
                         handleChange={this.handleDataChange.bind(this)}
                 />
+                <Select multi={true} value={this.props.data.orgs} placeholder="Select org(s)"
+                        options={this.props.users} onChange={this.handleOrgsChange.bind(this)} />
+                <br/>
                 {opt}
                 {opt && <br/>}
                 <Panel header="Preview:" collapsible={true} in={false}>
@@ -431,6 +445,7 @@ class FormList extends React.Component{
 
                 if (x.type==='question') {
                     node = <Question key={key} data={this.props.questions_data[x.id]}
+                                    users={this.props.users}
                                     handleChange={this.handleQuestionChange.bind(this, x.id)}
                                     handlePosition={this.handlePosition.bind(this, key)}
                                     handleDelete={this.handleDelete.bind(this, key)}/>
@@ -511,6 +526,7 @@ class MyForm extends React.Component{
         this.state = {
             form_data: {},
             questions_data: {},
+            users: [],
             loaded: false,
             topOrd: 0,
             newQID: -1,
@@ -523,18 +539,19 @@ class MyForm extends React.Component{
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
-            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString());
+            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString())
         }.bind(this))
         let secondPromise = $.ajax({
             url: "/api/form/" + this.props.form_id,
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
-            console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
+            console.error("/api/form/"+this.props.form_id+"/", status, err.toString())
         }.bind(this))
+        let thirdPromise = this.getUsersPromise()
 
-        $.when(firstPromise, secondPromise).done(function(firstData, secondData) {
-            let data, form_data, questions_data = {}
+        $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {
+            let data, form_data, questions_data = {}, users = []
             data = firstData[0]
             form_data = secondData[0]
 
@@ -545,9 +562,13 @@ class MyForm extends React.Component{
             }
             form_data.structure = JSON.parse(form_data.structure)
 
+            for (let i = 0; i<thirdData[0].length; i++) {
+                users.push({label: thirdData[0][i].username, value: thirdData[0][i].id})
+            }
             this.setState({
                 questions_data: questions_data,
                 form_data: form_data,
+                users: users,
                 loaded: true
             })
         }.bind(this))
@@ -742,23 +763,41 @@ class MyForm extends React.Component{
             return promise
         })
     }
-    setDefaultState() {
-        let deadline = moment().add(1, 'month');
-        let form_data = {
-            title: "Untitled form",
-            description: "",
-            structure: [],
-            deadline: deadline.format("YYYY-MM-DDTHH:mm:ssZ")
-        }
-        this.setState({
-            form_data: form_data,
-            questions_data: {},
-            topOrd: 0,
-            newQID: -1,
-            loaded: true,
-            form_id: -1,
-            created: false
+    getUsersPromise() {
+        return $.ajax({
+            url: "/api/user/",
+            dataType: 'json',
+            cache: false,
+        }).fail( function(xhr, status, err) {
+            console.error("/api/user/", status, err.toString())
         })
+    }
+    setDefaultState() {
+        let promise = this.getUsersPromise()
+        promise.done(function(data) {
+            let deadline = moment().add(1, 'month')
+            let form_data = {
+                title: "Untitled form",
+                description: "",
+                structure: [],
+                deadline: deadline.format("YYYY-MM-DDTHH:mm:ssZ")
+            }
+            let users = []
+            for (let i = 0; i<data.length; i++) {
+                users.push({label: data[i].username, value: data[i].id})
+            }
+            this.setState({
+                form_data: form_data,
+                questions_data: {},
+                users: users,
+                topOrd: 0,
+                newQID: -1,
+                loaded: true,
+                form_id: -1,
+                created: false
+            })
+        })
+
     }
     componentDidMount() {
         if (this.props.create) {
@@ -776,7 +815,7 @@ class MyForm extends React.Component{
                 <Row ref="main">
                     <Col md={10}>
                         <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
-                            setTopOrd={this.setTopOrd.bind(this)}
+                            setTopOrd={this.setTopOrd.bind(this)} users={this.state.users}
                             handleChange={this.handleChange.bind(this)} handleSubmit={(event) => this.handleFormSubmit(event)}/>
                     </Col>
                     <Col md={2}>

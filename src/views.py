@@ -2,7 +2,21 @@ from rest_framework import viewsets, mixins, generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
 from .models import Question, Form, Answer
-from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, QuestionSerializerBulk, AnswerSerializerBulk
+from django.contrib.auth.models import User
+from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, QuestionSerializerBulk, AnswerSerializerBulk, UserSerializer
+
+
+class UserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class FormViewSet(

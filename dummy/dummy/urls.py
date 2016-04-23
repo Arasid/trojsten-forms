@@ -19,12 +19,12 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.index, name="index"),
-    url(r'^all_forms/$', views.all_forms, name="index"),
+    url(r'^forms/$', views.forms, name="index"),
     url(r'^admin/', admin.site.urls),
-    url(r'^create_form/$', views.create_form, name='create_form'),
-    url(r'^edit_form/(?P<form_id>\d+)/$', views.edit_form, name='edit_form'),
-    url(r'^fill_form/(?P<form_id>\d+)/$', views.fill_form, name='fill_form'),
-    url(r'^results_form/(?P<form_id>\d+)/$', views.results_form, name='results_form'),
+    url(r'^forms/create/$', views.create_form, name='create_form'),
+    url(r'^forms/edit/(?P<form_id>\d+)/$', views.edit_form, name='edit_form'),
+    url(r'^forms/fill/(?P<form_id>\d+)/$', views.fill_form, name='fill_form'),
+    url(r'^forms/results/(?P<form_id>\d+)/$', views.results_form, name='results_form'),
     url(r'^api/', include("dummy.trojsten_forms.urls")),
     url(r'^register/$', views.register, name='register'),
     url(r'^login/$', views.user_login, name='login'),

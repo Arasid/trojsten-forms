@@ -2,14 +2,14 @@
 
 {% block content %}
     <h1>Active forms</h1>
-    <a href="../create_form"> Create </a>
+    <a href="create"> Create </a>
     <ul>
         {% for form in forms_active %}
             <li>
                 {{ form.title }} {{ form.deadline }} 
-                    <a href="../edit_form/{{ form.id }}">Edit</a>
-                    <a href="../fill_form/{{ form.id }}">Fill</a>
-                    <a href="../results_form/{{ form.id }}">Results</a>
+                    <a href="edit/{{ form.id }}">Edit</a>
+                    <a href="fill/{{ form.id }}">Fill</a>
+                    <a href="results/{{ form.id }}">Results</a>
                 <br/>
             </li>
         {% endfor %}
@@ -19,7 +19,7 @@
         {% for form in forms_dead %}
             <li>
                 {{ form.title }} {{ form.deadline }} 
-                    <a href="../results_form/{{ form.id }}">Results</a>
+                    <a href="results/{{ form.id }}">Results</a>
                 <br/>
             </li>
         {% endfor %}

@@ -12,7 +12,7 @@ def index(request):
 
 
 @login_required
-def all_forms(request):
+def forms(request):
     all_entries = models.Form.objects.order_by('deadline')
     now = timezone.now()
     forms_active, forms_dead = [], []
@@ -22,27 +22,27 @@ def all_forms(request):
         else:
             forms_dead.append({'title': ent.title, 'id': ent.id, 'deadline': ent.deadline})
     context_dict = {'forms_active': forms_active, 'forms_dead': forms_dead[::-1]}
-    return render(request, 'dummy/all_forms.html', context_dict)
+    return render(request, 'dummy/forms.html', context_dict)
 
 
 @login_required
 def create_form(request):
-    return render(request, 'dummy/edit_form.html', {'create': True, 'form_id': -1})
+    return render(request, 'dummy/edit.html', {'create': True, 'form_id': -1})
 
 
 @login_required
 def edit_form(request, form_id):
-    return render(request, 'dummy/edit_form.html', {'form_id': form_id})
+    return render(request, 'dummy/edit.html', {'form_id': form_id})
 
 
 @login_required
 def fill_form(request, form_id):
-    return render(request, 'dummy/fill_form.html', {'form_id': form_id})
+    return render(request, 'dummy/fill.html', {'form_id': form_id})
 
 
 @login_required
 def results_form(request, form_id):
-    return render(request, 'dummy/results_form.html', {'form_id': form_id})
+    return render(request, 'dummy/results.html', {'form_id': form_id})
 
 
 def register(request):

@@ -12,7 +12,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'question', 'user', 'text')
+    list_display = ('id', 'question', 'user', 'ans')
 
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Form, FormAdmin)

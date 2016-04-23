@@ -18,11 +18,18 @@ class QuestionSerializer(serializers.ModelSerializer):
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        fields = ('id', 'text', 'user', 'question')
+        fields = ('id', 'ans', 'user', 'question')
 
 
 class QuestionSerializerBulk(BulkSerializerMixin, serializers.ModelSerializer):
     class Meta(object):
         model = Question
+        # only necessary in DRF3
+        list_serializer_class = BulkListSerializer
+
+
+class AnswerSerializerBulk(BulkSerializerMixin, serializers.ModelSerializer):
+    class Meta(object):
+        model = Answer
         # only necessary in DRF3
         list_serializer_class = BulkListSerializer

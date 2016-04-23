@@ -13,6 +13,9 @@ class Form(models.Model):
     def __str__(self):
         return self.title
 
+    def __unicode__(self):
+        return u'{t}'.format(t=self.title)
+
 
 class Question(models.Model):
     Q_TYPES = (
@@ -38,8 +41,11 @@ class Question(models.Model):
     def __str__(self):
         return self.title
 
+    def __unicode__(self):
+        return u'{t}'.format(t=self.title)
+
 
 class Answer(models.Model):
-    text = models.CharField(max_length=200)
+    ans = models.CharField(max_length=200)
     question = models.OneToOneField(Question)
     user = models.ForeignKey(User)

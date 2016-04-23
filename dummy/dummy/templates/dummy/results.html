@@ -2,5 +2,6 @@
 {% load results_parts %}
 
 {% block content %}
-{% show_results_form %}
+    {% include 'dummy/form_nav.html' with type="results" %}
+    {% show_results_form %}
 {% endblock %}

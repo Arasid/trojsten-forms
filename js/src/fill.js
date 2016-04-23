@@ -5,6 +5,40 @@ import cookie from 'cookies-js'
 import { Form, FormGroup, ControlLabel, HelpBlock, Button} from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 
+class ShortAnswer extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    handleChange(text) {
+        let answer = {...this.props.answer}
+        answer.text = text
+        this.props.handleChange(answer)
+    }
+    render() {
+        return (        
+            <SmallInput value={this.props.answer.text} disabled={false} placeholder="Short-answer text"
+                        handleChange={this.handleChange.bind(this)}/>
+        )
+    }
+}
+
+class LongAnswer extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    handleChange(text) {
+        let answer = {...this.props.answer}
+        answer.text = text
+        this.props.handleChange(answer)
+    }
+    render() {
+        return (        
+            <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+                        handleChange={this.handleChange.bind(this)}/>
+        )
+    }
+}
+
 class MultipleChoice extends React.Component{
     constructor(props) {
         super(props)
@@ -17,11 +51,18 @@ class ScaleTextAnswer extends React.Component{
     constructor(props) {
         super(props)
     }
+    handleChange(key, value) {
+        let answer = {...this.props.answer}
+        answer[key] = value
+        this.props.handleChange(answer)
+    }
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} be_disabled={false} options={this.props.options.scaler1}/>
-                <BigInput value="" disabled={false} placeholder="Long-answer text"/>
+                <Scaler id={this.props.id} active={this.props.answer.scaler1} be_disabled={false} options={this.props.options.scaler1}
+                            handleChange={this.handleChange.bind(this,'scaler1')}/>
+                <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+                            handleChange={this.handleChange.bind(this,'text')}/>
             </div>
         )
     }
@@ -31,12 +72,20 @@ class TwoScalesTextAnswer extends React.Component{
     constructor(props) {
         super(props)
     }
+    handleChange(key, value) {
+        let answer = {...this.props.answer}
+        answer[key] = value
+        this.props.handleChange(answer)
+    }
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} be_disabled={false} options={this.props.options.scaler1}/>
-                <Scaler id={this.props.id} be_disabled={false} options={this.props.options.scaler2}/>
-                <BigInput value="" disabled={false} placeholder="Long-answer text"/>
+                <Scaler id={this.props.id} active={this.props.answer.scaler1} be_disabled={false} options={this.props.options.scaler1}
+                            handleChange={this.handleChange.bind(this,'scaler1')}/>
+                <Scaler id={this.props.id} active={this.props.answer.scaler2} be_disabled={false} options={this.props.options.scaler2}
+                            handleChange={this.handleChange.bind(this,'scaler2')}/>
+                <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+                            handleChange={this.handleChange.bind(this,'text')}/>
             </div>
         )
     }
@@ -50,19 +99,22 @@ class Question extends React.Component{
         let ans
         switch (this.props.data.q_type) {
             case "S":
-                ans = <SmallInput value="" disabled={false} placeholder="Short-answer text"/>
+                ans = <ShortAnswer id={this.props.data.id} answer={this.props.answer} handleChange={this.props.handleChange.bind(this)}/>
                 break
             case "L":
-                ans = <BigInput value="" disabled={false} placeholder="Long-answer text"/>
+                ans = <LongAnswer id={this.props.data.id} answer={this.props.answer} handleChange={this.props.handleChange.bind(this)}/>
                 break
             case "MC":
-                ans = <MultipleChoice id={this.props.data.id} options={this.props.data.options} />
+                ans = <MultipleChoice answer={this.props.answer} id={this.props.data.id} options={this.props.data.options}
+                                handleChange={this.props.handleChange.bind(this)}/>
                 break
             case "S1T":
-                ans = <ScaleTextAnswer id={this.props.data.id} options={this.props.data.options} />
+                ans = <ScaleTextAnswer answer={this.props.answer} id={this.props.data.id} options={this.props.data.options} 
+                                handleChange={this.props.handleChange.bind(this)}/>
                 break
             case "S2T":
-                ans = <TwoScalesTextAnswer id={this.props.data.id} options={this.props.data.options} />
+                ans = <TwoScalesTextAnswer answer={this.props.answer} id={this.props.data.id} options={this.props.data.options} 
+                                handleChange={this.props.handleChange.bind(this)}/>
                 break
             default:
                 console.error("Type of question " + this.props.data.q_type + " does not exist.")
@@ -97,13 +149,19 @@ class FormList extends React.Component{
     constructor(props) {
         super(props)
     }
+    handleChange(id, data) {
+        let answers_data = {...this.props.answers_data}
+        answers_data[id].ans = data
+        this.props.handleChange(answers_data)
+    }
     render() {
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
             let node
             if (x.type==='question') {
-                node = <Question key={key} data={this.props.questions_data[x.id]} />
+                node = <Question key={key} data={this.props.questions_data[x.id]} answer={this.props.answers_data[x.id].ans}
+                                    handleChange={this.handleChange.bind(this, x.id)}/>
             } else if (x.type==='section') {
                 node = <Section key={key} data={x.data} />
             }
@@ -144,6 +202,7 @@ class MyForm extends React.Component{
         this.state = {
             form_data: {},
             questions_data: {},
+            answers_data: {},
             loaded: false
         }
     }
@@ -162,25 +221,45 @@ class MyForm extends React.Component{
         }).fail( function(xhr, status, err) {
             console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
         }.bind(this))
+        let thirdPromise = $.ajax({
+            url: "/api/answers/" + this.props.form_id + "/",
+            dataType: 'json',
+            cache: false,
+        }).fail( function(xhr, status, err) {
+            console.error("/api/answers/"+this.props.form_id+"/", status, err.toString());
+        }.bind(this))
 
-        $.when(firstPromise, secondPromise).done(function(firstData, secondData) {
-            let data, form_data, questions_data = {}
-            data = firstData[0]
+        $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {
+            let data, form_data, answers_data = {}, questions_data = {}
             form_data = secondData[0]
+            form_data.structure = JSON.parse(form_data.structure)
 
+            data = firstData[0]
             for (let i = 0; i<data.length; ++i) {
                 let question = data[i]
                 question.options = JSON.parse(question.options)
                 questions_data[question.id] = question
             }
-            form_data.structure = JSON.parse(form_data.structure)
+
+            data = thirdData[0]
+            for (let i = 0; i<data.length; ++i) {
+                let answer = data[i]
+                answer.ans = JSON.parse(answer.ans)
+                answers_data[answer.question] = answer
+            }
 
             this.setState({
                 questions_data: questions_data,
                 form_data: form_data,
+                answers_data: answers_data,
                 loaded: true
             })
         }.bind(this))
+    }
+    handleChange(answers_data) {
+        this.setState({
+            answers_data: answers_data
+        })
     }
     handleFormSubmit(event) {
         event.preventDefault()
@@ -193,7 +272,8 @@ class MyForm extends React.Component{
         if (this.state.loaded) {
             return (
                 <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
-                    handleSubmit={(event) => this.handleFormSubmit(event)}/>
+                            answers_data={this.state.answers_data} handleSubmit={(event) => this.handleFormSubmit(event)}
+                            handleChange={this.handleChange.bind(this)}/>
             )
         } else {
             return (

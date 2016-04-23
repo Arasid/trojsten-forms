@@ -796,7 +796,7 @@ class MyForm extends React.Component{
                 form_id: -1,
                 created: false
             })
-        })
+        }.bind(this))
 
     }
     componentDidMount() {

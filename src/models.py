@@ -47,5 +47,8 @@ class Question(models.Model):
 
 class Answer(models.Model):
     ans = models.CharField(max_length=200)
-    question = models.OneToOneField(Question)
+    question = models.ForeignKey(Question)
     user = models.ForeignKey(User)
+
+    class Meta:
+        unique_together = ("user", "question")

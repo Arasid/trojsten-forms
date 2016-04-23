@@ -16,7 +16,7 @@ class ShortAnswer extends React.Component{
     }
     render() {
         return (        
-            <SmallInput value={this.props.answer.text} disabled={false} placeholder="Short-answer text"
+            <SmallInput value={this.props.answer.text || ""} disabled={false} placeholder="Short-answer text"
                         handleChange={this.handleChange.bind(this)}/>
         )
     }
@@ -33,7 +33,7 @@ class LongAnswer extends React.Component{
     }
     render() {
         return (        
-            <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+            <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
                         handleChange={this.handleChange.bind(this)}/>
         )
     }
@@ -59,9 +59,9 @@ class ScaleTextAnswer extends React.Component{
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} active={this.props.answer.scaler1} be_disabled={false} options={this.props.options.scaler1}
+                <Scaler id={this.props.id} active={this.props.answer.scaler1 || -1} be_disabled={false} options={this.props.options.scaler1}
                             handleChange={this.handleChange.bind(this,'scaler1')}/>
-                <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+                <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
                             handleChange={this.handleChange.bind(this,'text')}/>
             </div>
         )
@@ -80,11 +80,11 @@ class TwoScalesTextAnswer extends React.Component{
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} active={this.props.answer.scaler1} be_disabled={false} options={this.props.options.scaler1}
+                <Scaler id={this.props.id} active={this.props.answer.scaler1 || -1} be_disabled={false} options={this.props.options.scaler1}
                             handleChange={this.handleChange.bind(this,'scaler1')}/>
-                <Scaler id={this.props.id} active={this.props.answer.scaler2} be_disabled={false} options={this.props.options.scaler2}
+                <Scaler id={this.props.id} active={this.props.answer.scaler2 || -1} be_disabled={false} options={this.props.options.scaler2}
                             handleChange={this.handleChange.bind(this,'scaler2')}/>
-                <BigInput value={this.props.answer.text} disabled={false} placeholder="Long-answer text"
+                <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
                             handleChange={this.handleChange.bind(this,'text')}/>
             </div>
         )
@@ -151,7 +151,15 @@ class FormList extends React.Component{
     }
     handleChange(id, data) {
         let answers_data = {...this.props.answers_data}
-        answers_data[id].ans = data
+        if (id in answers_data) {
+            answers_data[id].ans = data
+        } else {
+            answers_data[id] = {
+                ans: data,
+                question: id,
+                id: -1
+            }
+        }
         this.props.handleChange(answers_data)
     }
     render() {
@@ -160,7 +168,8 @@ class FormList extends React.Component{
             let x = this.props.form_data.structure[key]
             let node
             if (x.type==='question') {
-                node = <Question key={key} data={this.props.questions_data[x.id]} answer={this.props.answers_data[x.id].ans}
+                node = <Question key={key} data={this.props.questions_data[x.id]}
+                                    answer={this.props.answers_data[x.id] ? this.props.answers_data[x.id].ans : {}}
                                     handleChange={this.handleChange.bind(this, x.id)}/>
             } else if (x.type==='section') {
                 node = <Section key={key} data={x.data} />
@@ -234,18 +243,18 @@ class MyForm extends React.Component{
             form_data = secondData[0]
             form_data.structure = JSON.parse(form_data.structure)
 
-            data = firstData[0]
-            for (let i = 0; i<data.length; ++i) {
-                let question = data[i]
-                question.options = JSON.parse(question.options)
-                questions_data[question.id] = question
-            }
-
             data = thirdData[0]
             for (let i = 0; i<data.length; ++i) {
                 let answer = data[i]
                 answer.ans = JSON.parse(answer.ans)
                 answers_data[answer.question] = answer
+            }
+
+            data = firstData[0]
+            for (let i = 0; i<data.length; ++i) {
+                let question = data[i]
+                question.options = JSON.parse(question.options)
+                questions_data[question.id] = question
             }
 
             this.setState({
@@ -263,7 +272,64 @@ class MyForm extends React.Component{
     }
     handleFormSubmit(event) {
         event.preventDefault()
-        //FIXME
+        let state = {...this.state}
+
+        //rozdel odpovede na stare nove
+        let old_answers = []
+        let new_answers = []
+        for (let key in this.state.answers_data) {
+            let answer = this.state.answers_data[key]
+            answer.ans = JSON.stringify(answer.ans)
+            if (answer.id == -1) {
+                new_answers.push(answer)
+            } else {
+                old_answers.push(answer)
+            }
+        }
+        let deferreds = []
+        for (let i = 0; i<old_answers.length; i++) {
+            let answer = old_answers[i]
+            deferreds.push(
+                $.ajax({
+                    url: "/api/answer/"+answer.id+"/",
+                    type: 'PUT',
+                    data: JSON.stringify(answer),
+                    headers: {
+                        "X-CSRFToken": cookie.get('csrftoken'),
+                        "Content-Type":"application/json; charset=utf-8",
+                    }
+                }).fail(function(xhr, status, err) {
+                    console.error("/api/answer/"+answer.id+"/", status, err.toString())
+                })
+            )
+        }
+        for (let i = 0; i<new_answers.length; i++) {
+            let answer = new_answers[i]
+            deferreds.push(
+                $.ajax({
+                    url: "/api/answer/",
+                    type: 'POST',
+                    data: JSON.stringify(answer),
+                    headers: {
+                        "X-CSRFToken": cookie.get('csrftoken'),
+                        "Content-Type":"application/json; charset=utf-8",
+                    }
+                }).fail(function(xhr, status, err) {
+                    console.error("/api/answer/", status, err.toString())
+                })
+            )
+        }
+        $.when.apply(null, deferreds).done(function() {
+            let answers_data = {}
+            for (let i = 0; i < arguments.length; ++i) {
+                let answer = arguments[i][0]
+                answer.ans = JSON.parse(answer.ans)
+                answers_data[answer.question] = answer
+            }
+            this.setState({
+                answers_data: answers_data
+            })
+        }.bind(this))
     }
     componentDidMount() {
         this.loadFormFromServer()

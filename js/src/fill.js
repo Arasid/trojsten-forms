@@ -320,9 +320,14 @@ class MyForm extends React.Component{
             )
         }
         $.when.apply(null, deferreds).done(function() {
+            let all = arguments
+            // problem ak deferreds ma jednu vec, tak arguments nebude pole velkosti jedna, ale rovno ten vysledok
+            if (deferreds.length == 1) {
+                all = [arguments]
+            }
             let answers_data = {}
-            for (let i = 0; i < arguments.length; ++i) {
-                let answer = arguments[i][0]
+            for (let i = 0; i < all.length; ++i) {
+                let answer = all[i][0]
                 answer.ans = JSON.parse(answer.ans)
                 answers_data[answer.question] = answer
             }

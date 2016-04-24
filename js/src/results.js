@@ -193,9 +193,14 @@ class FormResults extends React.Component{
                 )
             }
             $.when.apply(null, deferreds).done(function() {
+                let all = arguments
+                // problem ak deferreds ma jednu vec, tak arguments nebude pole velkosti jedna, ale rovno ten vysledok
+                if (deferreds.length == 1) {
+                    all = [arguments]
+                }
                 let orgs = []
-                for (let i = 0; i < arguments.length; ++i) {
-                    let user = arguments[i][0]
+                for (let i = 0; i < all.length; ++i) {
+                    let user = all[i][0]
                     orgs.push({label: user.username, value: user.id})
                 }
                 this.setState({

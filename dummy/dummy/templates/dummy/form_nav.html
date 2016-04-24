@@ -15,9 +15,13 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 {% if type == "edit" %}
-                    <li class="active"><a href="../../edit/{{ form_id }}">Edit <span class="sr-only">(current)</span></a></li>
-                    <li><a href="../../fill/{{ form_id }}">Fill</a></li>
-                    <li><a href="../../results/{{ form_id }}">Results</a></li>
+                    {% if not create %}
+                        <li class="active"><a href="../../edit/{{ form_id }}">Edit <span class="sr-only">(current)</span></a></li>
+                        <li><a href="../../fill/{{ form_id }}">Fill</a></li>
+                        <li><a href="../../results/{{ form_id }}">Results</a></li>
+                    {% else %}
+                        <li><a href="../../create/">Create other</a></li>
+                    {% endif %}
                 {% elif type == "fill" %}
                     <li><a href="../../edit/{{ form_id }}">Edit <span class="sr-only">(current)</span></a></li>
                     <li class="active"><a href="../../fill/{{ form_id }}">Fill</a></li>

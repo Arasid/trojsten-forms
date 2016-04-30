@@ -368,6 +368,41 @@ class Section extends React.Component{
     }
 }
 
+class FormOptions extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    handleGroupsChange(key, all) {
+        let list = []
+        for (let i = 0; i<all.length; i++) {
+            list.push(all[i].value)
+        }
+        this.props.handleChange(key, list)
+    }
+    render() {
+        return (
+            <Panel className="form-group">
+                <ControlLabel>Deadline:</ControlLabel>
+                <DateTimeField
+                    dateTime={this.props.deadline}
+                    format={"YYYY-MM-DDTHH:mm:ssZ"}
+                    viewMode={"date"}
+                    inputFormat={"DD.MM.YYYY HH:mm"}
+                    onChange={this.props.handleChange.bind(this, 'deadline')}
+                />
+                <br/>
+                <ControlLabel>Groups allowed editing:</ControlLabel>
+                <Select multi={true} value={this.props.can_edit} placeholder="Select groups that can edit"
+                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this, 'can_edit')} />
+                <br/>
+                <ControlLabel>Groups allowed filling:</ControlLabel>
+                <Select multi={true} value={this.props.can_fill} placeholder="Select groups that can fill"
+                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this, 'can_fill')} />
+            </Panel>
+        )
+    }
+}
+
 class FormList extends React.Component{
     constructor(props) {
         super(props)
@@ -390,6 +425,7 @@ class FormList extends React.Component{
         this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeaderChange(key, value){
+        console.log(key, value)
         let form_data = {...this.props.form_data}
         form_data[key] = value
         this.props.handleChange(form_data, this.props.questions_data)
@@ -426,11 +462,6 @@ class FormList extends React.Component{
         if (event.currentPosition === "above") {
             this.updateActiveTopOrd(ord+1)
         }
-    }
-    handleDeadline(deadline) {
-        let form_data = {...this.props.form_data}
-        form_data.deadline = deadline
-        this.props.handleChange(form_data, this.props.questions_data)
     }
     render() {
         let formNodes = []
@@ -472,13 +503,13 @@ class FormList extends React.Component{
                             descriptionPlaceholder="Form description"
                             handleChange={this.handleHeaderChange.bind(this)}
                     />
-                    <DateTimeField
-                          dateTime={this.props.form_data.deadline}
-                          format={"YYYY-MM-DDTHH:mm:ssZ"}
-                          viewMode={"date"}
-                          inputFormat={"DD.MM.YYYY HH:mm"}
-                          onChange={this.handleDeadline.bind(this)}
-                        />
+                    <FormOptions
+                        deadline={this.props.form_data.deadline}
+                        can_fill={this.props.form_data.can_fill}
+                        can_edit={this.props.form_data.can_edit}
+                        groups={this.props.groups}
+                        handleChange={this.handleHeaderChange.bind(this)}
+                    />
                 </FormGroup>
                 {formNodes}
                 <Button type="submit" bsStyle="primary" bsSize="large">Save</Button>
@@ -534,26 +565,27 @@ class MyForm extends React.Component{
         }
     }
     loadFormFromServer() {
-        let firstPromise = $.ajax({
+        let questionPromise = $.ajax({
             url: "/api/questions/" + this.props.form_id + "/",
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
             console.error("/api/questions/"+this.props.form_id+"/", status, err.toString())
         }.bind(this))
-        let secondPromise = $.ajax({
+        let formPromise = $.ajax({
             url: "/api/form/" + this.props.form_id,
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
             console.error("/api/form/"+this.props.form_id+"/", status, err.toString())
         }.bind(this))
-        let thirdPromise = this.getUsersPromise()
+        let userPromise = this.getUsersPromise()
+        let groupPromise = this.getGroupsPromise()
 
-        $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {
-            let data, form_data, questions_data = {}, users = []
-            data = firstData[0]
-            form_data = secondData[0]
+        $.when(questionPromise, formPromise, userPromise, groupPromise).done(function(questionData, formData, userData, groupData) {
+            let data, form_data, questions_data = {}, users = [], groups = []
+            data = questionData[0]
+            form_data = formData[0]
 
             for (let i = 0; i<data.length; ++i) {
                 let question = data[i]
@@ -562,13 +594,17 @@ class MyForm extends React.Component{
             }
             form_data.structure = JSON.parse(form_data.structure)
 
-            for (let i = 0; i<thirdData[0].length; i++) {
-                users.push({label: thirdData[0][i].username, value: thirdData[0][i].id})
+            for (let i = 0; i<userData[0].length; i++) {
+                users.push({label: userData[0][i].username, value: userData[0][i].id})
+            }
+            for (let i = 0; i<groupData[0].length; i++) {
+                groups.push({label: groupData[0][i].name, value: groupData[0][i].id})
             }
             this.setState({
                 questions_data: questions_data,
                 form_data: form_data,
                 users: users,
+                groups: groups,
                 loaded: true
             })
         }.bind(this))
@@ -772,9 +808,19 @@ class MyForm extends React.Component{
             console.error("/api/user/", status, err.toString())
         })
     }
+    getGroupsPromise() {
+        return $.ajax({
+            url: "/api/group/",
+            dataType: 'json',
+            cache: false,
+        }).fail( function(xhr, status, err) {
+            console.error("/api/group/", status, err.toString())
+        })
+    }
     setDefaultState() {
-        let promise = this.getUsersPromise()
-        promise.done(function(data) {
+        let userPromise = this.getUsersPromise()
+        let groupPromise = this.getGroupsPromise()
+        $.when(userPromise, groupPromise).done(function(userData, groupData) {
             let deadline = moment().add(1, 'month')
             let form_data = {
                 title: "Untitled form",
@@ -783,13 +829,18 @@ class MyForm extends React.Component{
                 deadline: deadline.format("YYYY-MM-DDTHH:mm:ssZ")
             }
             let users = []
-            for (let i = 0; i<data.length; i++) {
-                users.push({label: data[i].username, value: data[i].id})
+            for (let i = 0; i<userData.length; i++) {
+                users.push({label: userData[i].username, value: userData[i].id})
+            }
+            let groups = []
+            for (let i = 0; i<groupData.length; i++) {
+                groups.push({label: groupData[i].name, value: groupData[i].id})
             }
             this.setState({
                 form_data: form_data,
                 questions_data: {},
                 users: users,
+                groups: groups,
                 topOrd: 0,
                 newQID: -1,
                 loaded: true,
@@ -814,9 +865,15 @@ class MyForm extends React.Component{
             return (
                 <Row ref="main">
                     <Col md={10}>
-                        <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
-                            setTopOrd={this.setTopOrd.bind(this)} users={this.state.users}
-                            handleChange={this.handleChange.bind(this)} handleSubmit={(event) => this.handleFormSubmit(event)}/>
+                        <FormList
+                            form_data={this.state.form_data}
+                            questions_data={this.state.questions_data}
+                            setTopOrd={this.setTopOrd.bind(this)}
+                            users={this.state.users}
+                            groups={this.state.groups}
+                            handleChange={this.handleChange.bind(this)}
+                            handleSubmit={(event) => this.handleFormSubmit(event)}
+                        />
                     </Col>
                     <Col md={2}>
                         <SidePanel getMain={this.getMain.bind(this)} handleAdd={this.addSomething.bind(this)}/>

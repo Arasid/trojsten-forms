@@ -1,9 +1,10 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from .views import FormViewSet, QuestionViewSet, AnswerViewSet, QuestionList, UserAnswerList, AnswerList,UserViewSet
+from .views import FormViewSet, QuestionViewSet, AnswerViewSet, QuestionList, UserAnswerList, AnswerList,UserViewSet, GroupViewSet
 
 router = routers.DefaultRouter()
 router.register(r'user', UserViewSet)
+router.register(r'group', GroupViewSet)
 router.register(r'form', FormViewSet)
 router.register(r'question', QuestionViewSet)
 router.register(r'answer', AnswerViewSet)

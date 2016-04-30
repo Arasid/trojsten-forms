@@ -4,7 +4,7 @@ from .models import Question, Form, Answer
 
 # Register your models here.
 class FormAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'deadline', 'description', 'structure',)
+    list_display = ('id', 'title', 'deadline', 'description', 'structure', 'get_can_edit', 'get_can_fill')
 
 
 class QuestionAdmin(admin.ModelAdmin):

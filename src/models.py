@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 
 
 class Form(models.Model):
@@ -9,6 +10,16 @@ class Form(models.Model):
     description = models.CharField(max_length=300, default="", blank=True)
     deadline = models.DateTimeField()
     structure = models.CharField(max_length=2000, default="[]")
+    can_edit = models.ManyToManyField(Group, blank=True, related_name="Edit")
+    can_fill = models.ManyToManyField(Group, blank=True, related_name="Fill")
+
+    def get_can_edit(self):
+        return ", ".join([str(o) for o in self.can_edit.all()])
+    get_can_edit.short_description = 'Users for edit'
+
+    def get_can_fill(self):
+        return ", ".join([str(o) for o in self.can_fill.all()])
+    get_can_fill.short_description = 'Users for fill'
 
     def __str__(self):
         return self.title

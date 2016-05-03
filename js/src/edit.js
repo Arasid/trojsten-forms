@@ -11,6 +11,7 @@ import DateTimeField from "react-bootstrap-datetimepicker"
 import 'react-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'
 import 'react-select/dist/react-select.min.css'
 import moment from 'moment'
+import uuid from 'uuid'
 
 class ScrollSpy extends React.Component {
     constructor(props) {
@@ -425,7 +426,6 @@ class FormList extends React.Component{
         this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeaderChange(key, value){
-        console.log(key, value)
         let form_data = {...this.props.form_data}
         form_data[key] = value
         this.props.handleChange(form_data, this.props.questions_data)
@@ -558,41 +558,45 @@ class MyForm extends React.Component{
             form_data: {},
             questions_data: {},
             users: [],
+            groups: [],
             loaded: false,
             topOrd: 0,
-            newQID: -1,
             created: true
         }
     }
     loadFormFromServer() {
-        let questionPromise = $.ajax({
-            url: "/api/questions/" + this.props.form_id + "/",
-            dataType: 'json',
-            cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString())
-        }.bind(this))
         let formPromise = $.ajax({
-            url: "/api/form/" + this.props.form_id,
-            dataType: 'json',
+            url: "/api/whole_form/"+this.props.form_id+"/",
             cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/form/"+this.props.form_id+"/", status, err.toString())
+            dataType: 'json'
+        }).fail(function(xhr, status, err) {
+            console.error("/api/whole_form/"+this.props.form_id+"/", status, err.toString())
         }.bind(this))
         let userPromise = this.getUsersPromise()
         let groupPromise = this.getGroupsPromise()
 
-        $.when(questionPromise, formPromise, userPromise, groupPromise).done(function(questionData, formData, userData, groupData) {
-            let data, form_data, questions_data = {}, users = [], groups = []
-            data = questionData[0]
-            form_data = formData[0]
+        $.when(formPromise, userPromise, groupPromise).done(function(wholeFormData, userData, groupData) {
+            let data, form_data, questions_data = {}, users = [], groups = [], tmp_data = {}
+            data = wholeFormData[0].questions
+            form_data = wholeFormData[0].form
 
             for (let i = 0; i<data.length; ++i) {
                 let question = data[i]
                 question.options = JSON.parse(question.options)
-                questions_data[question.id] = question
+                tmp_data[question.id] = question
             }
+
             form_data.structure = JSON.parse(form_data.structure)
+            for (let i = 0; i<form_data.structure.length; i++) {
+                let thing = form_data.structure[i]
+                if (thing.type === 'question') {
+                    let q_id = thing.id
+                    let q_uuid = uuid.v1()
+                    let q_data = tmp_data[q_id]
+                    thing.id = q_uuid
+                    questions_data[q_uuid] = q_data
+                }
+            }
 
             for (let i = 0; i<userData[0].length; i++) {
                 users.push({label: userData[0][i].username, value: userData[0][i].id})
@@ -626,12 +630,12 @@ class MyForm extends React.Component{
                 } 
             }
         } else {
+            let new_id = uuid.v1()
             new_something = {
                 type: "question",
-                id: state.newQID
+                id: new_id
             }
             let new_data = {
-                id: state.newQID,
                 title: "",
                 description: "",
                 orgs: [],
@@ -639,10 +643,9 @@ class MyForm extends React.Component{
                 q_type: "S",
                 form: this.state.form_data.id
             }
-            state.questions_data[state.newQID] = new_data
+            state.questions_data[new_id] = new_data
         }
         state.form_data.structure.splice(state.topOrd,0,new_something)
-        state.newQID = state.newQID - 1
         this.setState(state)
     }
     handleChange(form_data, questions_data) {
@@ -654,150 +657,78 @@ class MyForm extends React.Component{
     handleFormSubmit(event) {
         event.preventDefault()
         let state = {...this.state}
-        let questions_data = {}
-
-        //rozdel otazky na stare nove
-        let old_questions = []
-        let new_questions = []
-        let del_questions = []
-        let new_structure = []
-        for (let ord=0; ord<state.form_data.structure.length; ord++) {
-            let thing = state.form_data.structure[ord]
-            if (thing.type === "question") {
-                let key = thing.id
-                let question = state.questions_data[key]
-                question.options = JSON.stringify(question.options)
-                if (key > 0) {
-                    if (thing.removed) {
-                        del_questions.push(question.id)
-                    } else {
-                        old_questions.push(question)
-                    }
-                } else {
-                    if (!thing.removed) {
-                        new_questions.push(question)
-                    }
-                }
-            }
-            if (!thing.removed) {
-                new_structure.push(thing)
+        for (let i = 0; i<state.form_data.structure.length; i++) {
+            let thing = state.form_data.structure[i]
+            if (thing.type === 'question') {
+                thing.options = JSON.stringify(thing.options)
             }
         }
-        state.form_data.structure = new_structure
+        state.form_data.structure = JSON.stringify(state.form_data.structure)
 
         let promise
         if (!state.created) {
-            state.form_data.structure = JSON.stringify(state.form_data.structure)
-            //vytvorim novy form
             promise = $.ajax({
-                url: "/api/form/",
+                url: "/api/whole_form/",
                 dataType: 'json',
                 type: 'POST',
-                data: JSON.stringify(state.form_data),
+                data: JSON.stringify({
+                    form: state.form_data,
+                    questions: state.questions_data
+                }),
                 headers: {
                     "X-CSRFToken": cookie.get('csrftoken'),
                     "Content-Type":"application/json; charset=utf-8",
                 }
-            }).done(function(data) {
-                data.structure = JSON.parse(data.structure)
-                state.form_data = data
-                state.created = true
-                for (let i = 0; i<new_questions.length; i++) {
-                    new_questions[i].form = state.form_data.id
-                }
             }).fail(function(xhr, status, err) {
-                console.error("/api/form/", status, err.toString())
+                console.error("/api/whole_form/", status, err.toString())
             })
         } else {
-            //submitnem stare otazky
             promise = $.ajax({
-                url: "/api/questions/" + state.form_data.id+"/",
+                url: "/api/whole_form/"+state.form_data.id+"/",
                 dataType: 'json',
                 type: 'PUT',
-                data: JSON.stringify(old_questions),
+                data: JSON.stringify({
+                    form: state.form_data,
+                    questions: state.questions_data
+                }),
                 headers: {
                     "X-CSRFToken": cookie.get('csrftoken'),
                     "Content-Type":"application/json; charset=utf-8",
                 }
-            }).done(function(data) {
-                for (let i = 0; i<data.length; ++i) {
-                    let question = data[i]
-                    question.options = JSON.parse(question.options)
-                    questions_data[question.id] = question
-                }
             }).fail(function(xhr, status, err) {
-                console.error("/api/questions/"+this.props.form_id+"/", status, err.toString())
+                console.error("/api/whole_form/"+state.form_data.id+"/", status, err.toString())
             })
         }
-        promise.then( function() {
-            return $.ajax({
-                url: "/api/questions/"+state.form_data.id+"/",
-                dataType: 'json',
-                type: 'POST',
-                data: JSON.stringify(new_questions),
-                headers: {
-                    "X-CSRFToken": cookie.get('csrftoken'),
-                    "Content-Type":"application/json; charset=utf-8",
-                }
-            }).done(function(data) {
-                let map_new = {}
-                for (let i = 0; i<data.length; ++i) {
-                    let question = data[i]
-                    question.options = JSON.parse(question.options)
-                    questions_data[question.id] = question
-                    map_new[new_questions[i].id] = question.id
-                }
-                for (let ord=0; ord<state.form_data.structure.length; ord++) {
-                    let thing = state.form_data.structure[ord]
-                    if (thing.type === "question") {
-                        let key = thing.id
-                        if (key < 0) {
-                            state.form_data.structure[ord].id = map_new[key]
-                        }
-                    }
-                }
-            }).fail(function(xhr, status, err) {
-                console.error("/api/questions/"+this.state.form_data.id+"/", status, err.toString())
-            })
-        }).then( function() {
-            state.form_data.structure = JSON.stringify(state.form_data.structure)
-            return $.ajax({
-                url: "/api/form/"+state.form_data.id+"/",
-                dataType: 'json',
-                type: 'PUT',
-                data: JSON.stringify(state.form_data),
-                headers: {
-                    "X-CSRFToken": cookie.get('csrftoken'),
-                    "Content-Type":"application/json; charset=utf-8",
-                }
-            }).done(function(data) {
-                data.structure = JSON.parse(data.structure)
-                state.form_data = data
-            }).fail(function(xhr, status, err) {
-                console.error("/api/form/"+state.form_data.id+"/", status, err.toString())
-            })
-        }).then(function(){
-            state.questions_data = questions_data
-            state.newQID = -1
-            this.setState(state)
-        }.bind(this)).then(function(){
-            let promise = $.Deferred()
-            for (let i = 0; i<del_questions.length; i++) {
-                promise = promise.then(function(id){
-                    return $.ajax({
-                        url: "/api/question/"+id,
-                        type: 'DELETE',
-                        headers: {
-                            "X-CSRFToken": cookie.get('csrftoken'),
-                            "Content-Type":"application/json; charset=utf-8",
-                        }
-                    }).fail(function(xhr, status, err) {
-                        console.error("/api/question/"+id, status, err.toString())
-                    })
-                }(del_questions[i]))
+        promise.done(function(wholeFormData) {
+            let data, form_data, questions_data = {}, tmp_data = {}
+            data = wholeFormData.questions
+            form_data = wholeFormData.form
+
+            for (let i = 0; i<data.length; ++i) {
+                let question = data[i]
+                question.options = JSON.parse(question.options)
+                tmp_data[question.id] = question
             }
-            return promise
-        })
+
+            form_data.structure = JSON.parse(form_data.structure)
+            for (let i = 0; i<form_data.structure.length; i++) {
+                let thing = form_data.structure[i]
+                if (thing.type === 'question') {
+                    let q_id = thing.id
+                    let q_uuid = uuid.v1()
+                    let q_data = tmp_data[q_id]
+                    thing.id = q_uuid
+                    questions_data[q_uuid] = q_data
+                }
+            }
+            this.setState({
+                questions_data: questions_data,
+                form_data: form_data,
+                loaded: true,
+                created: true
+            })
+
+        }.bind(this))
     }
     getUsersPromise() {
         return $.ajax({
@@ -842,7 +773,6 @@ class MyForm extends React.Component{
                 users: users,
                 groups: groups,
                 topOrd: 0,
-                newQID: -1,
                 loaded: true,
                 form_id: -1,
                 created: false

@@ -290,7 +290,7 @@ class Question extends React.Component{
                     <ListGroupItem>
                         <Row>
                             <Col md={1}>
-                                <Button onClick={this.props.handleDelete.bind(this)}>
+                                <Button onClick={(event) => this.handleDataChange('active', false)}>
                                     <Glyphicon glyph="trash" />
                                 </Button>
                             </Col>
@@ -407,6 +407,7 @@ class FormList extends React.Component{
         this.setActiveTopOrd = this.setActiveTopOrd.bind(this)
     }
     handleQuestionChange(id, data) {
+        console.log(id, data)
         let questions_data = {...this.props.questions_data}
         questions_data[id] = data
         this.props.handleChange(this.props.form_data,questions_data)
@@ -416,9 +417,9 @@ class FormList extends React.Component{
         form_data.structure[key].data = data
         this.props.handleChange(form_data, this.props.questions_data)
     }
-    handleDelete(key) {
+    handleSectionDelete(key) {
         let form_data = {...this.props.form_data}
-        form_data.structure[key].removed = true
+        form_data.structure.splice(key, 1)
         this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeaderChange(key, value){
@@ -463,7 +464,7 @@ class FormList extends React.Component{
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
-            if (!x.removed) {
+            if (x.type !=='question' || this.props.questions_data[x.id].active) {
                 let node = <ScrollSpy key={"spy"+key} ord={key}
                         handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
                 formNodes.push(
@@ -475,12 +476,12 @@ class FormList extends React.Component{
                                     users={this.props.users}
                                     handleChange={this.handleQuestionChange.bind(this, x.id)}
                                     handlePosition={this.handlePosition.bind(this, key)}
-                                    handleDelete={this.handleDelete.bind(this, key)}/>
+                            />
                 } else if (x.type==='section') {
                     node = <Section key={key} data={x.data} 
                                     handleChange={this.handleSectionChange.bind(this, key)}
                                     handlePosition={this.handlePosition.bind(this, key)}
-                                    handleDelete={this.handleDelete.bind(this, key)}/>
+                                    handleDelete={this.handleSectionDelete.bind(this, key)}/>
                 }
                 formNodes.push(
                     node
@@ -632,6 +633,7 @@ class MyForm extends React.Component{
             }
             let new_data = {
                 title: "",
+                active: true,
                 description: "",
                 orgs: [],
                 options: {},

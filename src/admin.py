@@ -8,7 +8,7 @@ class FormAdmin(admin.ModelAdmin):
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'description', 'q_type', 'options', 'form', 'get_orgs')
+    list_display = ('id', 'title', 'active', 'description', 'q_type', 'options', 'form', 'get_orgs')
 
 
 class AnswerAdmin(admin.ModelAdmin):

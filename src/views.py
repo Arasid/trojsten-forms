@@ -121,7 +121,7 @@ class FormDetail(
 
     def get(self, request, form_id, format=None):
         form = Form.objects.get(pk=form_id)
-        questions = Question.objects.filter(form=form_id)
+        questions = Question.objects.filter(form=form_id, active=True)
         f_serializer = FormSerializer(form)
         q_serializer = QuestionSerializer(questions, many=True)
         response = {
@@ -136,13 +136,16 @@ class FormDetail(
 
         def process_question(q_uuid):
             q_data = questions[q_uuid]
+            print q_data
             q_serializer = None
             if 'id' in q_data:
                 # povodna otazka
                 q_serializer = QuestionSerializer(Question.objects.get(pk=q_data['id']), data=q_data)
-            else:
+            elif q_data['active']:
                 # nova otaka
                 q_serializer = QuestionSerializer(data=q_data)
+            else:
+                return True, None
             if q_serializer.is_valid():
                 q_serializer.save()
                 return True, q_serializer.data
@@ -150,17 +153,21 @@ class FormDetail(
 
         questions_data = []
         form['structure'] = json.loads(form['structure'])
+        structure = []
         for x in form['structure']:
             if x['type'] != 'question':
+                structure.append(x)
                 continue
             ok, q_data = process_question(x['id'])
+            if q_data['active']:
+                structure.append(x)
             if not ok:
                 # nastal problem, dalej nerobim
                 return Response(q_data, status=status.HTTP_400_BAD_REQUEST)
-            else:
+            elif q_data is not None:
                 x['id'] = q_data['id']
                 questions_data.append(q_data)
-        form['structure'] = json.dumps(form['structure'])
+        form['structure'] = json.dumps(structure)
 
         formSerializer = FormSerializer(Form.objects.get(pk=form_id), data=request.data['form'])
         if formSerializer.is_valid():

@@ -39,6 +39,7 @@ class Question(models.Model):
     # options bude obsahovat required
     options = models.CharField(max_length=1000, default="{}")
     orgs = models.ManyToManyField(User, blank=True)
+    active = models.BooleanField(default=True)
 
     def get_orgs(self):
         return ", ".join([str(o) for o in self.orgs.all()])

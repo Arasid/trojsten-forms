@@ -19,7 +19,7 @@ class GroupSerializer(serializers.ModelSerializer):
 class FormSerializer(serializers.ModelSerializer):
     class Meta:
         model = Form
-        fields = ('id', 'title', 'deadline', 'structure', 'description', 'can_edit', 'can_fill')
+        fields = ('id', 'title', 'deadline', 'structure', 'description', 'can_edit')
 
 
 class QuestionSerializer(serializers.ModelSerializer):

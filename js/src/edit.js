@@ -373,12 +373,12 @@ class FormOptions extends React.Component{
     constructor(props) {
         super(props)
     }
-    handleGroupsChange(key, all) {
+    handleGroupsChange(all) {
         let list = []
         for (let i = 0; i<all.length; i++) {
             list.push(all[i].value)
         }
-        this.props.handleChange(key, list)
+        this.props.handleChange('can_edit', list)
     }
     render() {
         return (
@@ -394,11 +394,7 @@ class FormOptions extends React.Component{
                 <br/>
                 <ControlLabel>Groups allowed editing:</ControlLabel>
                 <Select multi={true} value={this.props.can_edit} placeholder="Select groups that can edit"
-                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this, 'can_edit')} />
-                <br/>
-                <ControlLabel>Groups allowed filling:</ControlLabel>
-                <Select multi={true} value={this.props.can_fill} placeholder="Select groups that can fill"
-                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this, 'can_fill')} />
+                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this)} />
             </Panel>
         )
     }
@@ -505,7 +501,6 @@ class FormList extends React.Component{
                     />
                     <FormOptions
                         deadline={this.props.form_data.deadline}
-                        can_fill={this.props.form_data.can_fill}
                         can_edit={this.props.form_data.can_edit}
                         groups={this.props.groups}
                         handleChange={this.handleHeaderChange.bind(this)}

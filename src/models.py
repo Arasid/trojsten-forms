@@ -11,18 +11,13 @@ class Form(models.Model):
     deadline = models.DateTimeField()
     structure = models.CharField(max_length=2000, default="[]")
     can_edit = models.ManyToManyField(Group, blank=True, related_name="Edit")
-    can_fill = models.ManyToManyField(Group, blank=True, related_name="Fill")
 
     def get_can_edit(self):
         return ", ".join([str(o) for o in self.can_edit.all()])
     get_can_edit.short_description = 'Users for edit'
 
-    def get_can_fill(self):
-        return ", ".join([str(o) for o in self.can_fill.all()])
-    get_can_fill.short_description = 'Users for fill'
-
     def __str__(self):
-        return self.title
+        return self.title + "__" + str(self.deadline)
 
     def __unicode__(self):
         return u'{t}'.format(t=self.title)

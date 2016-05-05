@@ -124,9 +124,18 @@ class FormDetail(
         questions = Question.objects.filter(form=form_id, active=True)
         f_serializer = FormSerializer(form)
         q_serializer = QuestionSerializer(questions, many=True)
+
+        questions_data = {}
+        for q in q_serializer.data:
+            q['options'] = json.loads(q['options'])
+            questions_data[q['q_uuid']] = q
+
+        form = f_serializer.data
+        form['structure'] = json.loads(form['structure'])
+
         response = {
-            "form": f_serializer.data,
-            "questions": q_serializer.data
+            "form": form,
+            "questions": questions_data
         }
         return Response(response)
 

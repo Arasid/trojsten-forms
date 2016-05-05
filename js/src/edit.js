@@ -571,17 +571,9 @@ class MyForm extends React.Component{
         let groupPromise = this.getGroupsPromise()
 
         $.when(formPromise, userPromise, groupPromise).done(function(wholeFormData, userData, groupData) {
-            let data, form_data, questions_data = {}, users = [], groups = []
-            data = wholeFormData[0].questions
-            form_data = wholeFormData[0].form
-
-            for (let i = 0; i<data.length; ++i) {
-                let question = data[i]
-                question.options = JSON.parse(question.options)
-                questions_data[question.q_uuid] = question
-            }
-
-            form_data.structure = JSON.parse(form_data.structure)
+            let users = [], groups = []
+            let questions_data = wholeFormData[0].questions
+            let form_data = wholeFormData[0].form
 
             for (let i = 0; i<userData[0].length; i++) {
                 users.push({label: userData[0][i].username, value: userData[0][i].id})

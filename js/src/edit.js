@@ -636,10 +636,6 @@ class MyForm extends React.Component{
     handleFormSubmit(event) {
         event.preventDefault()
         let state = {...this.state}
-        for (let q_uuid in state.questions_data) {
-            state.questions_data[q_uuid].options = JSON.stringify(state.questions_data[q_uuid].options)
-        }
-        state.form_data.structure = JSON.stringify(state.form_data.structure)
 
         let promise
         if (!state.created) {

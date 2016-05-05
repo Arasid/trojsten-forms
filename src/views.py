@@ -89,7 +89,6 @@ class FormView(
         questions = request.data['questions']
         form = request.data['form']
 
-        form['structure'] = json.loads(form['structure'])
         structure = []
         for x in form['structure']:
             if x['type'] != 'question':
@@ -110,8 +109,10 @@ class FormView(
             for x in form['structure']:
                 if x['type'] != 'question':
                     continue
-                questions[x['q_uuid']]['form'] = form['id']
-                q_serializer = QuestionSerializer(data=questions[x['q_uuid']])
+                q_data = questions[x['q_uuid']]
+                q_data['form'] = form['id']
+                q_data['options'] = json.dumps(q_data['options'])
+                q_serializer = QuestionSerializer(data=q_data)
                 if q_serializer.is_valid():
                     q_serializer.save()
                     q_data = q_serializer.data
@@ -157,16 +158,14 @@ class FormDetail(
         questions = request.data['questions']
         form = request.data['form']
 
-        print questions
-
         def process_question(q_uuid):
-            print q_uuid
             q_data = questions[q_uuid]
             if not q_data['active']:
                 return True, None
 
             q_serializer = None
             try:
+                q_data['options'] = json.dumps(q_data['options'])
                 q = Question.objects.get(q_uuid=q_uuid)
                 q_serializer = QuestionSerializer(q, data=q_data)
             except Question.DoesNotExist:
@@ -178,7 +177,6 @@ class FormDetail(
             return False, q_serializer.errors
 
         questions_data = {}
-        form['structure'] = json.loads(form['structure'])
         structure = []
         for x in form['structure']:
             if x['type'] != 'question':

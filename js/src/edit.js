@@ -407,7 +407,6 @@ class FormList extends React.Component{
         this.setActiveTopOrd = this.setActiveTopOrd.bind(this)
     }
     handleQuestionChange(id, data) {
-        console.log(id, data)
         let questions_data = {...this.props.questions_data}
         questions_data[id] = data
         this.props.handleChange(this.props.form_data,questions_data)
@@ -464,7 +463,7 @@ class FormList extends React.Component{
         let formNodes = []
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
-            if (x.type !=='question' || this.props.questions_data[x.id].active) {
+            if (x.type !=='question' || this.props.questions_data[x.q_uuid].active) {
                 let node = <ScrollSpy key={"spy"+key} ord={key}
                         handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
                 formNodes.push(
@@ -472,9 +471,9 @@ class FormList extends React.Component{
                 )
 
                 if (x.type==='question') {
-                    node = <Question key={key} data={this.props.questions_data[x.id]}
+                    node = <Question key={key} data={this.props.questions_data[x.q_uuid]}
                                     users={this.props.users}
-                                    handleChange={this.handleQuestionChange.bind(this, x.id)}
+                                    handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
                                     handlePosition={this.handlePosition.bind(this, key)}
                             />
                 } else if (x.type==='section') {
@@ -572,27 +571,17 @@ class MyForm extends React.Component{
         let groupPromise = this.getGroupsPromise()
 
         $.when(formPromise, userPromise, groupPromise).done(function(wholeFormData, userData, groupData) {
-            let data, form_data, questions_data = {}, users = [], groups = [], tmp_data = {}
+            let data, form_data, questions_data = {}, users = [], groups = []
             data = wholeFormData[0].questions
             form_data = wholeFormData[0].form
 
             for (let i = 0; i<data.length; ++i) {
                 let question = data[i]
                 question.options = JSON.parse(question.options)
-                tmp_data[question.id] = question
+                questions_data[question.q_uuid] = question
             }
 
             form_data.structure = JSON.parse(form_data.structure)
-            for (let i = 0; i<form_data.structure.length; i++) {
-                let thing = form_data.structure[i]
-                if (thing.type === 'question') {
-                    let q_id = thing.id
-                    let q_uuid = uuid.v1()
-                    let q_data = tmp_data[q_id]
-                    thing.id = q_uuid
-                    questions_data[q_uuid] = q_data
-                }
-            }
 
             for (let i = 0; i<userData[0].length; i++) {
                 users.push({label: userData[0][i].username, value: userData[0][i].id})
@@ -629,7 +618,7 @@ class MyForm extends React.Component{
             let new_id = uuid.v1()
             new_something = {
                 type: "question",
-                id: new_id
+                q_uuid: new_id
             }
             let new_data = {
                 title: "",
@@ -654,11 +643,8 @@ class MyForm extends React.Component{
     handleFormSubmit(event) {
         event.preventDefault()
         let state = {...this.state}
-        for (let i = 0; i<state.form_data.structure.length; i++) {
-            let thing = state.form_data.structure[i]
-            if (thing.type === 'question') {
-                thing.options = JSON.stringify(thing.options)
-            }
+        for (let q_uuid in state.questions_data) {
+            state.questions_data[q_uuid].options = JSON.stringify(state.questions_data[q_uuid].options)
         }
         state.form_data.structure = JSON.stringify(state.form_data.structure)
 
@@ -697,27 +683,17 @@ class MyForm extends React.Component{
             })
         }
         promise.done(function(wholeFormData) {
-            let data, form_data, questions_data = {}, tmp_data = {}
+            let data, form_data, questions_data = {}
             data = wholeFormData.questions
             form_data = wholeFormData.form
 
             for (let i = 0; i<data.length; ++i) {
                 let question = data[i]
                 question.options = JSON.parse(question.options)
-                tmp_data[question.id] = question
+                questions_data[question.q_uuid] = question
             }
 
             form_data.structure = JSON.parse(form_data.structure)
-            for (let i = 0; i<form_data.structure.length; i++) {
-                let thing = form_data.structure[i]
-                if (thing.type === 'question') {
-                    let q_id = thing.id
-                    let q_uuid = uuid.v1()
-                    let q_data = tmp_data[q_id]
-                    thing.id = q_uuid
-                    questions_data[q_uuid] = q_data
-                }
-            }
             this.setState({
                 questions_data: questions_data,
                 form_data: form_data,

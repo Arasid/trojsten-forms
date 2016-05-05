@@ -32,6 +32,7 @@ class Question(models.Model):
         ('S2T', 'Two scales with text answer'),
     )
 
+    q_uuid = models.CharField(max_length=100, blank=True)
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=1000, blank=True)
     form = models.ForeignKey(Form)

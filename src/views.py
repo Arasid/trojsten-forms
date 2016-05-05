@@ -93,11 +93,10 @@ class FormView(
         for x in form['structure']:
             if x['type'] != 'question':
                 continue
-            q_serializer = QuestionSerializer(data=questions[x['id']])
+            q_serializer = QuestionSerializer(data=questions[x['q_uuid']])
             if q_serializer.is_valid():
                 q_serializer.save()
                 q_data = q_serializer.data
-                x['id'] = q_data['id']
                 questions_data.append(q_data)
             else:
                 return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -136,16 +135,16 @@ class FormDetail(
 
         def process_question(q_uuid):
             q_data = questions[q_uuid]
-            print q_data
-            q_serializer = None
-            if 'id' in q_data:
-                # povodna otazka
-                q_serializer = QuestionSerializer(Question.objects.get(pk=q_data['id']), data=q_data)
-            elif q_data['active']:
-                # nova otaka
-                q_serializer = QuestionSerializer(data=q_data)
-            else:
+            if not q_data['active']:
                 return True, None
+
+            q_serializer = None
+            try:
+                q = Question.objects.get(q_uuid=q_uuid)
+                q_serializer = QuestionSerializer(q, data=q_data)
+            except Question.DoesNotExist:
+                q_serializer = QuestionSerializer(data=q_data)
+                pass
             if q_serializer.is_valid():
                 q_serializer.save()
                 return True, q_serializer.data
@@ -158,14 +157,13 @@ class FormDetail(
             if x['type'] != 'question':
                 structure.append(x)
                 continue
-            ok, q_data = process_question(x['id'])
+            ok, q_data = process_question(x['q_uuid'])
             if q_data['active']:
                 structure.append(x)
             if not ok:
                 # nastal problem, dalej nerobim
                 return Response(q_data, status=status.HTTP_400_BAD_REQUEST)
             elif q_data is not None:
-                x['id'] = q_data['id']
                 questions_data.append(q_data)
         form['structure'] = json.dumps(structure)
 

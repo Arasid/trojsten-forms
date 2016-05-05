@@ -36,14 +36,20 @@ class InputHeader extends React.Component{
         return (
             <FormGroup>
                 <FormGroup validationState={this.props.title.length > 0 ? "success" : "error"}>
-                    <SmallInput label={this.props.titleLabel} value={this.props.title}
-                                placeholder={this.props.titlePlaceholder}
-                                handleChange={this.props.handleChange.bind(this, "title")} />
+                    <SmallInput
+                        label={this.props.titleLabel}
+                        value={this.props.title}
+                        placeholder={this.props.titlePlaceholder}
+                        handleChange={this.props.handleChange.bind(this, "title")}
+                    />
                 </FormGroup>
-                <SmallInput label={this.props.descriptionLabel} value={this.props.description}
-                            placeholder={this.props.descriptionPlaceholder}
-                            handleChange={this.props.handleChange.bind(this, "description")}
-                            bsSize="small"/>
+                <SmallInput
+                    label={this.props.descriptionLabel}
+                    value={this.props.description}
+                    placeholder={this.props.descriptionPlaceholder}
+                    handleChange={this.props.handleChange.bind(this, "description")}
+                    bsSize="small"
+                />
             </FormGroup>
         )
     }
@@ -134,28 +140,42 @@ class ScalerOption extends React.Component{
             <Row>
                 <Col md={3}>
                     <ControlLabel>from</ControlLabel>
-                    <FormControl groupClassName="group-class" value={this.props.scaler.min} componentClass="select"
-                                    onChange={(event)=>this.handleChange("min", event.target.value)}>
+                    <FormControl
+                        groupClassName="group-class"
+                        value={this.props.scaler.min}
+                        componentClass="select"
+                        onChange={(event)=>this.handleChange("min", event.target.value)}
+                    >
                         {all_min}
                     </FormControl>
                 </Col>
                 <Col md={3}>
                     <ControlLabel>to</ControlLabel>
-                    <FormControl groupClassName="group-class" value={this.props.scaler.max} componentClass="select"
-                                    onChange={(event)=>this.handleChange("max", event.target.value) }>
+                    <FormControl
+                        groupClassName="group-class"
+                        value={this.props.scaler.max}
+                        componentClass="select"
+                        onChange={(event)=>this.handleChange("max", event.target.value)}
+                    >
                         {all_max}
                     </FormControl>
                 </Col>
                 <Col md={3}>
-                    <SmallInput value={this.props.scaler.label_min} placeholder="Label Min" disabled={false}
-                                label={"Label for " + this.props.scaler.min} 
-                                handleChange={this.handleChange.bind(this, 'label_min')}
+                    <SmallInput
+                        value={this.props.scaler.label_min}
+                        placeholder="Label Min"
+                        disabled={false}
+                        label={"Label for " + this.props.scaler.min} 
+                        handleChange={this.handleChange.bind(this, 'label_min')}
                     />
                 </Col>
                 <Col md={3}>
-                    <SmallInput value={this.props.scaler.label_max} placeholder="Label Max" disabled={false}
-                                label={"Label for " + this.props.scaler.max}
-                                handleChange={this.handleChange.bind(this, 'label_max')}
+                    <SmallInput
+                        value={this.props.scaler.label_max}
+                        placeholder="Label Max" 
+                        disabled={false}
+                        label={"Label for " + this.props.scaler.max}
+                        handleChange={this.handleChange.bind(this, 'label_max')}
                     />
                 </Col>
             </Row>
@@ -175,8 +195,9 @@ class OneScalerOption extends React.Component{
     render() {
         return (
             <div>
-                <ScalerOption scaler={this.props.options.scaler1}
-                        handleChange={this.handleChange.bind(this, 'scaler1')}
+                <ScalerOption
+                    scaler={this.props.options.scaler1}
+                    handleChange={this.handleChange.bind(this, 'scaler1')}
                 />
             </div>
         )
@@ -195,8 +216,14 @@ class TwoScalerOptions extends React.Component{
     render() {
         return (
             <div>
-                <ScalerOption scaler={this.props.options.scaler1} handleChange={this.handleChange.bind(this, 'scaler1')}/>
-                <ScalerOption scaler={this.props.options.scaler2} handleChange={this.handleChange.bind(this, 'scaler2')}/>
+                <ScalerOption
+                    scaler={this.props.options.scaler1}
+                    handleChange={this.handleChange.bind(this, 'scaler1')}
+                />
+                <ScalerOption
+                    scaler={this.props.options.scaler2}
+                    handleChange={this.handleChange.bind(this, 'scaler2')}
+                />
             </div>
         )
     }
@@ -248,19 +275,25 @@ class Question extends React.Component{
                 ans = <LongAnswer id={this.props.data.id}/>
                 break
             case "MC":
-                ans = <MultipleChoice id={this.props.data.id} options={this.props.data.options}
-                                    handleChange={this.handleDataChange.bind(this, 'options')}/>
+                ans = <MultipleChoice
+                            id={this.props.data.id}
+                            options={this.props.data.options}
+                            handleChange={this.handleDataChange.bind(this, 'options')}
+                />
                 break
             case "S1T":
                 ans = <ScaleTextAnswer id={this.props.data.id} options={this.props.data.options} />
-                opt = <OneScalerOption options={this.props.data.options}
-                                    handleChange={this.handleDataChange.bind(this, 'options')}
-                                    />
+                opt = <OneScalerOption
+                            options={this.props.data.options}
+                            handleChange={this.handleDataChange.bind(this, 'options')}
+                />
                 break
             case "S2T":
                 ans = <TwoScalesTextAnswer id={this.props.data.id} options={this.props.data.options} />
-                opt = <TwoScalerOptions options={this.props.data.options}
-                                    handleChange={this.handleDataChange.bind(this, 'options')}/>
+                opt = <TwoScalerOptions
+                            options={this.props.data.options}
+                            handleChange={this.handleDataChange.bind(this, 'options')}
+                />
                 break
             default:
                 console.error("Type of question " + this.props.data.q_type + " does not exist.")
@@ -276,8 +309,13 @@ class Question extends React.Component{
                         descriptionPlaceholder="Question description"
                         handleChange={this.handleDataChange.bind(this)}
                 />
-                <Select multi={true} value={this.props.data.orgs} placeholder="Select org(s)"
-                        options={this.props.users} onChange={this.handleOrgsChange.bind(this)} />
+                <Select
+                    multi={true}
+                    value={this.props.data.orgs}
+                    placeholder="Select org(s)"
+                    options={this.props.users}
+                    onChange={this.handleOrgsChange.bind(this)}
+                />
                 <br/>
                 {opt}
                 {opt && <br/>}
@@ -295,8 +333,12 @@ class Question extends React.Component{
                                 </Button>
                             </Col>
                             <Col md={4}>
-                                <FormControl componentClass="select" value={this.props.data.q_type} 
-                                                    placeholder="select" onChange={(event)=>this.handleTypeChange(event)}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={this.props.data.q_type} 
+                                    placeholder="select"
+                                    onChange={(event)=>this.handleTypeChange(event)}
+                                >
                                     <option value="S">Short answer</option>
                                     <option value="L">Long answer</option>
                                     <option value="MC">Multiple choice</option>
@@ -393,8 +435,13 @@ class FormOptions extends React.Component{
                 />
                 <br/>
                 <ControlLabel>Groups allowed editing:</ControlLabel>
-                <Select multi={true} value={this.props.can_edit} placeholder="Select groups that can edit"
-                        options={this.props.groups} onChange={this.handleGroupsChange.bind(this)} />
+                <Select
+                    multi={true}
+                    value={this.props.can_edit}
+                    placeholder="Select groups that can edit"
+                    options={this.props.groups}
+                    onChange={this.handleGroupsChange.bind(this)}
+                />
             </Panel>
         )
     }
@@ -464,23 +511,32 @@ class FormList extends React.Component{
         for (let key = 0; key<this.props.form_data.structure.length; key++) {
             let x = this.props.form_data.structure[key]
             if (x.type !=='question' || this.props.questions_data[x.q_uuid].active) {
-                let node = <ScrollSpy key={"spy"+key} ord={key}
-                        handleAfter={this.handleAfter.bind(this, key)} handleBefore={this.handleBefore.bind(this, key)}/>
+                let node = <ScrollSpy
+                                key={"spy"+key}
+                                ord={key}
+                                handleAfter={this.handleAfter.bind(this, key)}
+                                handleBefore={this.handleBefore.bind(this, key)}
+                />
                 formNodes.push(
                     node
                 )
 
                 if (x.type==='question') {
-                    node = <Question key={key} data={this.props.questions_data[x.q_uuid]}
-                                    users={this.props.users}
-                                    handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
-                                    handlePosition={this.handlePosition.bind(this, key)}
-                            />
+                    node = <Question 
+                                key={key}
+                                data={this.props.questions_data[x.q_uuid]}
+                                users={this.props.users}
+                                handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
+                                handlePosition={this.handlePosition.bind(this, key)}
+                    />
                 } else if (x.type==='section') {
-                    node = <Section key={key} data={x.data} 
-                                    handleChange={this.handleSectionChange.bind(this, key)}
-                                    handlePosition={this.handlePosition.bind(this, key)}
-                                    handleDelete={this.handleSectionDelete.bind(this, key)}/>
+                    node = <Section 
+                                key={key} 
+                                data={x.data} 
+                                handleChange={this.handleSectionChange.bind(this, key)}
+                                handlePosition={this.handlePosition.bind(this, key)}
+                                handleDelete={this.handleSectionDelete.bind(this, key)}
+                    />
                 }
                 formNodes.push(
                     node

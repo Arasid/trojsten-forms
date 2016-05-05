@@ -15,8 +15,14 @@ export class Scaler extends React.Component {
         let scaleNodes = []
         for (let i = parseInt(this.props.options.min); i <= parseInt(this.props.options.max); i++) { 
             let node = (
-                <Button key={i} active={this.props.active===i} onClick={this.handleSelect.bind(this, i)} 
-                                disabled={this.props.be_disabled}>{i}</Button>
+                <Button
+                    key={i}
+                    active={this.props.active===i}
+                    onClick={this.handleSelect.bind(this, i)} 
+                    disabled={this.props.be_disabled}
+                >
+                    {i}
+                </Button>
             )
             scaleNodes.push(node)
         }
@@ -44,8 +50,14 @@ export class SmallInput extends React.Component{
             <div>
                 {this.props.label && <ControlLabel>{this.props.label}</ControlLabel>}
                 {this.props.description && <HelpBlock>{this.props.description}</HelpBlock>}
-                <FormControl type="text" componentClass="input" value={this.props.value} placeholder={this.props.placeholder} 
-                            disabled={this.props.disabled} onChange={(event) => this.handleChange(event)}/>
+                <FormControl
+                    type="text"
+                    componentClass="input"
+                    value={this.props.value}
+                    placeholder={this.props.placeholder} 
+                    disabled={this.props.disabled}
+                    onChange={(event) => this.handleChange(event)}
+                />
             </div>
         )
     }
@@ -63,8 +75,13 @@ export class BigInput extends React.Component{
             <div>
                 {this.props.label && <ControlLabel>{this.props.label}</ControlLabel>}
                 {this.props.description && <HelpBlock>{this.props.description}</HelpBlock>}
-                <FormControl componentClass="textarea" value={this.props.value} placeholder={this.props.placeholder} 
-                            disabled={this.props.disabled} onChange={(event) => this.handleChange(event)}/>
+                <FormControl
+                    componentClass="textarea"
+                    value={this.props.value}
+                    placeholder={this.props.placeholder} 
+                    disabled={this.props.disabled}
+                    onChange={(event) => this.handleChange(event)}
+                />
             </div>
         )
     }

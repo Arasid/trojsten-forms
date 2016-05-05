@@ -176,8 +176,14 @@ class FormResults extends React.Component{
             return (
                 <div>
                     <h3>{this.state.title}</h3>
-                    <Select value={this.state.filter_org} placeholder="All" searchable={true} clearable={true}
-                            options={this.state.orgs} onChange={this.handleOrgsChange.bind(this)} />
+                    <Select
+                        value={this.state.filter_org}
+                        placeholder="All"
+                        searchable={true}
+                        clearable={true}
+                        options={this.state.orgs}
+                        onChange={this.handleOrgsChange.bind(this)}
+                    />
                     <br/>
                     <Results
                         question_list={this.state.question_list}

@@ -16,8 +16,12 @@ class ShortAnswer extends React.Component{
     }
     render() {
         return (        
-            <SmallInput value={this.props.answer.text || ""} disabled={false} placeholder="Short-answer text"
-                        handleChange={this.handleChange.bind(this)}/>
+            <SmallInput
+                value={this.props.answer.text || ""}
+                disabled={false}
+                placeholder="Short-answer text"
+                handleChange={this.handleChange.bind(this)}
+            />
         )
     }
 }
@@ -33,8 +37,12 @@ class LongAnswer extends React.Component{
     }
     render() {
         return (        
-            <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
-                        handleChange={this.handleChange.bind(this)}/>
+            <BigInput
+                value={this.props.answer.text || ""}
+                disabled={false}
+                placeholder="Long-answer text"
+                handleChange={this.handleChange.bind(this)}
+            />
         )
     }
 }
@@ -59,10 +67,19 @@ class ScaleTextAnswer extends React.Component{
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} active={this.props.answer.scaler1 || -1} be_disabled={false} options={this.props.options.scaler1}
-                            handleChange={this.handleChange.bind(this,'scaler1')}/>
-                <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
-                            handleChange={this.handleChange.bind(this,'text')}/>
+                <Scaler
+                    id={this.props.id}
+                    active={this.props.answer.scaler1 || -1}
+                    be_disabled={false}
+                    options={this.props.options.scaler1}
+                    handleChange={this.handleChange.bind(this,'scaler1')}
+                />
+                <BigInput
+                    value={this.props.answer.text || ""}
+                    disabled={false}
+                    placeholder="Long-answer text"
+                    handleChange={this.handleChange.bind(this,'text')}
+                />
             </div>
         )
     }
@@ -80,12 +97,26 @@ class TwoScalesTextAnswer extends React.Component{
     render() {
         return (
             <div>
-                <Scaler id={this.props.id} active={this.props.answer.scaler1 || -1} be_disabled={false} options={this.props.options.scaler1}
-                            handleChange={this.handleChange.bind(this,'scaler1')}/>
-                <Scaler id={this.props.id} active={this.props.answer.scaler2 || -1} be_disabled={false} options={this.props.options.scaler2}
-                            handleChange={this.handleChange.bind(this,'scaler2')}/>
-                <BigInput value={this.props.answer.text || ""} disabled={false} placeholder="Long-answer text"
-                            handleChange={this.handleChange.bind(this,'text')}/>
+                <Scaler
+                    id={this.props.id}
+                    active={this.props.answer.scaler1 || -1}
+                    be_disabled={false}
+                    options={this.props.options.scaler1}
+                    handleChange={this.handleChange.bind(this,'scaler1')}
+                />
+                <Scaler 
+                    id={this.props.id}
+                    active={this.props.answer.scaler2 || -1}
+                    be_disabled={false}
+                    options={this.props.options.scaler2}
+                    handleChange={this.handleChange.bind(this,'scaler2')}
+                />
+                <BigInput
+                    value={this.props.answer.text || ""}
+                    disabled={false}
+                    placeholder="Long-answer text"
+                    handleChange={this.handleChange.bind(this,'text')}
+                />
             </div>
         )
     }
@@ -99,22 +130,42 @@ class Question extends React.Component{
         let ans
         switch (this.props.data.q_type) {
             case "S":
-                ans = <ShortAnswer id={this.props.data.id} answer={this.props.answer} handleChange={this.props.handleChange.bind(this)}/>
+                ans = <ShortAnswer
+                            id={this.props.data.id}
+                            answer={this.props.answer}
+                            handleChange={this.props.handleChange.bind(this)}
+                />
                 break
             case "L":
-                ans = <LongAnswer id={this.props.data.id} answer={this.props.answer} handleChange={this.props.handleChange.bind(this)}/>
+                ans = <LongAnswer
+                            id={this.props.data.id}
+                            answer={this.props.answer}
+                            handleChange={this.props.handleChange.bind(this)}
+                />
                 break
             case "MC":
-                ans = <MultipleChoice answer={this.props.answer} id={this.props.data.id} options={this.props.data.options}
-                                handleChange={this.props.handleChange.bind(this)}/>
+                ans = <MultipleChoice
+                            answer={this.props.answer}
+                            id={this.props.data.id}
+                            options={this.props.data.options}
+                            handleChange={this.props.handleChange.bind(this)}
+                />
                 break
             case "S1T":
-                ans = <ScaleTextAnswer answer={this.props.answer} id={this.props.data.id} options={this.props.data.options} 
-                                handleChange={this.props.handleChange.bind(this)}/>
+                ans = <ScaleTextAnswer
+                            answer={this.props.answer}
+                            id={this.props.data.id}
+                            options={this.props.data.options} 
+                            handleChange={this.props.handleChange.bind(this)}
+                />
                 break
             case "S2T":
-                ans = <TwoScalesTextAnswer answer={this.props.answer} id={this.props.data.id} options={this.props.data.options} 
-                                handleChange={this.props.handleChange.bind(this)}/>
+                ans = <TwoScalesTextAnswer
+                            answer={this.props.answer}
+                            id={this.props.data.id}
+                            options={this.props.data.options} 
+                            handleChange={this.props.handleChange.bind(this)}
+                />
                 break
             default:
                 console.error("Type of question " + this.props.data.q_type + " does not exist.")
@@ -173,7 +224,7 @@ class FormList extends React.Component{
                             data={q_data}
                             answer={this.props.answers_data[q_data.id] ? this.props.answers_data[q_data.id].ans : {}}
                             handleChange={this.handleChange.bind(this, q_data.id)}
-                        />
+                />
             } else if (x.type==='section') {
                 node = <Section key={key} data={x.data} />
             }

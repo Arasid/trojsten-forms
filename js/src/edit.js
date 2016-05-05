@@ -613,6 +613,7 @@ class MyForm extends React.Component{
                 q_uuid: new_id
             }
             let new_data = {
+                q_uuid: new_id,
                 title: "",
                 active: true,
                 description: "",
@@ -675,17 +676,8 @@ class MyForm extends React.Component{
             })
         }
         promise.done(function(wholeFormData) {
-            let data, form_data, questions_data = {}
-            data = wholeFormData.questions
-            form_data = wholeFormData.form
-
-            for (let i = 0; i<data.length; ++i) {
-                let question = data[i]
-                question.options = JSON.parse(question.options)
-                questions_data[question.q_uuid] = question
-            }
-
-            form_data.structure = JSON.parse(form_data.structure)
+            let questions_data = wholeFormData.questions
+            let form_data = wholeFormData.form
             this.setState({
                 questions_data: questions_data,
                 form_data: form_data,

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Question, Form, Answer
-from rest_framework_bulk import BulkListSerializer, BulkSerializerMixin
 from django.contrib.auth.models import User, Group
 
 
@@ -32,17 +31,3 @@ class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = ('id', 'user', 'ans', 'question')
-
-
-class QuestionSerializerBulk(BulkSerializerMixin, serializers.ModelSerializer):
-    class Meta(object):
-        model = Question
-        # only necessary in DRF3
-        list_serializer_class = BulkListSerializer
-
-
-class AnswerSerializerBulk(BulkSerializerMixin, serializers.ModelSerializer):
-    class Meta(object):
-        model = Answer
-        # only necessary in DRF3
-        list_serializer_class = BulkListSerializer

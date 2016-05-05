@@ -2,10 +2,9 @@ import json
 from rest_framework import viewsets, mixins, views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
 from .models import Question, Form, Answer
 from django.contrib.auth.models import User, Group
-from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, QuestionSerializerBulk, AnswerSerializerBulk, UserSerializer, GroupSerializer
+from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, UserSerializer, GroupSerializer
 from .permissions import IsRightGroup, IsStaff
 
 
@@ -325,34 +324,3 @@ class ResultsDetail(
             "title": f_serializer.data['title']
         }
         return Response(response)
-
-
-class QuestionList(
-    ListBulkCreateUpdateDestroyAPIView
-):
-    serializer_class = QuestionSerializerBulk
-
-    def get_queryset(self):
-        form = self.kwargs['form']
-        return Question.objects.filter(form=form)
-
-
-class UserAnswerList(
-    ListBulkCreateUpdateDestroyAPIView
-):
-    serializer_class = AnswerSerializerBulk
-
-    def get_queryset(self):
-        user = self.request.user
-        form = self.kwargs['form']
-        return Answer.objects.filter(user=user, question__form=form)
-
-
-class AnswerList(
-    ListBulkCreateUpdateDestroyAPIView
-):
-    serializer_class = AnswerSerializerBulk
-
-    def get_queryset(self):
-        form = self.kwargs['form']
-        return Answer.objects.filter(question__form=form)

@@ -156,8 +156,7 @@ class FormList extends React.Component{
         } else {
             answers_data[id] = {
                 ans: data,
-                question: id,
-                id: -1
+                question: id
             }
         }
         this.props.handleChange(answers_data)
@@ -168,9 +167,13 @@ class FormList extends React.Component{
             let x = this.props.form_data.structure[key]
             let node
             if (x.type==='question') {
-                node = <Question key={key} data={this.props.questions_data[x.id]}
-                                    answer={this.props.answers_data[x.id] ? this.props.answers_data[x.id].ans : {}}
-                                    handleChange={this.handleChange.bind(this, x.id)}/>
+                let q_data = this.props.questions_data[x.q_uuid]
+                node = <Question
+                            key={key}
+                            data={q_data}
+                            answer={this.props.answers_data[q_data.id] ? this.props.answers_data[q_data.id].ans : {}}
+                            handleChange={this.handleChange.bind(this, q_data.id)}
+                        />
             } else if (x.type==='section') {
                 node = <Section key={key} data={x.data} />
             }
@@ -217,50 +220,16 @@ class MyForm extends React.Component{
     }
     loadFormFromServer() {
         let firstPromise = $.ajax({
-            url: "/api/questions/" + this.props.form_id + "/",
+            url: "/api/fill_form/" + this.props.form_id + "/",
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
-            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-        let secondPromise = $.ajax({
-            url: "/api/form/" + this.props.form_id,
-            dataType: 'json',
-            cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-        let thirdPromise = $.ajax({
-            url: "/api/user_answers/" + this.props.form_id + "/",
-            dataType: 'json',
-            cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/user_answers/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-
-        $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {
-            let data, form_data, answers_data = {}, questions_data = {}
-            form_data = secondData[0]
-            form_data.structure = JSON.parse(form_data.structure)
-
-            data = thirdData[0]
-            for (let i = 0; i<data.length; ++i) {
-                let answer = data[i]
-                answer.ans = JSON.parse(answer.ans)
-                answers_data[answer.question] = answer
-            }
-
-            data = firstData[0]
-            for (let i = 0; i<data.length; ++i) {
-                let question = data[i]
-                question.options = JSON.parse(question.options)
-                questions_data[question.id] = question
-            }
-
+            console.error("/api/fill_form/"+this.props.form_id+"/", status, err.toString());
+        }.bind(this)).done(function(data) {
             this.setState({
-                questions_data: questions_data,
-                form_data: form_data,
-                answers_data: answers_data,
+                questions_data: data.questions,
+                form_data: data.form,
+                answers_data: data.answers,
                 loaded: true
             })
         }.bind(this))
@@ -274,65 +243,19 @@ class MyForm extends React.Component{
         event.preventDefault()
         let state = {...this.state}
 
-        //rozdel odpovede na stare nove
-        let old_answers = []
-        let new_answers = []
-        for (let key in this.state.answers_data) {
-            let answer = this.state.answers_data[key]
-            answer.ans = JSON.stringify(answer.ans)
-            if (answer.id == -1) {
-                new_answers.push(answer)
-            } else {
-                old_answers.push(answer)
+        $.ajax({
+            url: "/api/fill_form/"+state.form_data.id+"/",
+            type: 'PUT',
+            data: JSON.stringify(state.answers_data),
+            headers: {
+                "X-CSRFToken": cookie.get('csrftoken'),
+                "Content-Type":"application/json; charset=utf-8",
             }
-        }
-        let deferreds = []
-        for (let i = 0; i<old_answers.length; i++) {
-            let answer = old_answers[i]
-            deferreds.push(
-                $.ajax({
-                    url: "/api/answer/"+answer.id+"/",
-                    type: 'PUT',
-                    data: JSON.stringify(answer),
-                    headers: {
-                        "X-CSRFToken": cookie.get('csrftoken'),
-                        "Content-Type":"application/json; charset=utf-8",
-                    }
-                }).fail(function(xhr, status, err) {
-                    console.error("/api/answer/"+answer.id+"/", status, err.toString())
-                })
-            )
-        }
-        for (let i = 0; i<new_answers.length; i++) {
-            let answer = new_answers[i]
-            deferreds.push(
-                $.ajax({
-                    url: "/api/answer/",
-                    type: 'POST',
-                    data: JSON.stringify(answer),
-                    headers: {
-                        "X-CSRFToken": cookie.get('csrftoken'),
-                        "Content-Type":"application/json; charset=utf-8",
-                    }
-                }).fail(function(xhr, status, err) {
-                    console.error("/api/answer/", status, err.toString())
-                })
-            )
-        }
-        $.when.apply(null, deferreds).done(function() {
-            let all = arguments
-            // problem ak deferreds ma jednu vec, tak arguments nebude pole velkosti jedna, ale rovno ten vysledok
-            if (deferreds.length == 1) {
-                all = [arguments]
-            }
-            let answers_data = {}
-            for (let i = 0; i < all.length; ++i) {
-                let answer = all[i][0]
-                answer.ans = JSON.parse(answer.ans)
-                answers_data[answer.question] = answer
-            }
+        }).fail(function(xhr, status, err) {
+            console.error("/api/fill_form/"+state.form_data.id+"/", status, err.toString())
+        }).done(function(data) {
             this.setState({
-                answers_data: answers_data
+                answers_data: data
             })
         }.bind(this))
     }
@@ -342,9 +265,13 @@ class MyForm extends React.Component{
     render() {
         if (this.state.loaded) {
             return (
-                <FormList form_data={this.state.form_data} questions_data={this.state.questions_data}
-                            answers_data={this.state.answers_data} handleSubmit={(event) => this.handleFormSubmit(event)}
-                            handleChange={this.handleChange.bind(this)}/>
+                <FormList
+                    form_data={this.state.form_data}
+                    questions_data={this.state.questions_data}
+                    answers_data={this.state.answers_data}
+                    handleSubmit={(event) => this.handleFormSubmit(event)}
+                    handleChange={this.handleChange.bind(this)}
+                />
             )
         } else {
             return (

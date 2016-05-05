@@ -206,6 +206,72 @@ class FormDetail(
         return Response(formSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class FillForm(
+    views.APIView
+):
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request, form_id, format=None):
+        user = request.user
+        form = Form.objects.get(pk=form_id)
+        questions = Question.objects.filter(form=form_id, active=True)
+        answers = Answer.objects.filter(user=user, question__form=form_id)
+        f_serializer = FormSerializer(form)
+        q_serializer = QuestionSerializer(questions, many=True)
+        a_serializer = AnswerSerializer(answers, many=True)
+
+        questions_data = {}
+        for q in q_serializer.data:
+            q['options'] = json.loads(q['options'])
+            questions_data[q['q_uuid']] = q
+
+        form = f_serializer.data
+        form['structure'] = json.loads(form['structure'])
+
+        answers_data = {}
+        for a in a_serializer.data:
+            a['ans'] = json.loads(a['ans'])
+            answers_data[a['question']] = a
+
+        response = {
+            "form": form,
+            "questions": questions_data,
+            "answers": answers_data
+        }
+        return Response(response)
+
+    def put(self, request, form_id, format=None):
+        user = request.user
+        answers = request.data
+
+        def process_answer(a_data, q_id):
+            a_serializer = None
+            a_data['question'] = q_id
+            try:
+                a_data['ans'] = json.dumps(a_data['ans'])
+                a = Answer.objects.get(question=q_id, user=user)
+                a_serializer = AnswerSerializer(a, data=a_data)
+            except Answer.DoesNotExist:
+                a_serializer = AnswerSerializer(data=a_data)
+            if a_serializer.is_valid():
+                a_serializer.save()
+                return True, a_serializer.data
+            return False, a_serializer.errors
+
+        answers_data = {}
+        for q_id, answer in answers.items():
+            ok, a_data = process_answer(answer, q_id)
+            if not ok:
+                # nastal problem, dalej nerobim
+                return Response(a_data, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                a_data['ans'] = json.loads(a_data['ans'])
+                answers_data[a_data['question']] = a_data
+
+        response = answers_data
+        return Response(response)
+
+
 class ResultsDetail(
     views.APIView
 ):

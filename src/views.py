@@ -2,11 +2,11 @@ import json
 from rest_framework import viewsets, mixins, views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
 from .models import Question, Form, Answer
 from django.contrib.auth.models import User, Group
 from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, QuestionSerializerBulk, AnswerSerializerBulk, UserSerializer, GroupSerializer
+from .permissions import IsRightGroup, IsStaff
 
 
 class UserViewSet(
@@ -83,7 +83,7 @@ class AnswerViewSet(
 class FormView(
     views.APIView
 ):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
     def post(self, request, format=None):
         questions = request.data['questions']
@@ -132,7 +132,7 @@ class FormView(
 class FormDetail(
     views.APIView
 ):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsRightGroup, IsStaff, )
 
     def get(self, request, form_id, format=None):
         form = Form.objects.get(pk=form_id)
@@ -209,20 +209,11 @@ class FormDetail(
 class ResultsDetail(
     views.APIView
 ):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsRightGroup, IsStaff, )
 
     def get(self, request, form_id, format=None):
         form = Form.objects.get(pk=form_id)
         f_serializer = FormSerializer(form)
-
-        active_user = request.user
-        can_edit = f_serializer.data['can_edit']
-        if not active_user.is_staff:
-            raise PermissionDenied()
-        groups = [g.id for g in active_user.groups.all()]
-        inter = set(can_edit) & set(groups)
-        if len(inter) == 0:
-            raise PermissionDenied()
 
         questions = Question.objects.filter(form=form_id, active=True)
         answers = Answer.objects.filter(question__form=form_id)

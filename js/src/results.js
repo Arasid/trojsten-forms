@@ -12,7 +12,7 @@ class TableHeader extends React.Component{
     }
     render() {
         let row_nodes = []
-        row_nodes.push(<th key={"user"}>User</th>)
+        row_nodes.push(<th colSpan="2" key={"user"}>User</th>)
         for (let i = 0; i<this.props.list.length; ++i) {
             let q = this.props.list[i]
             if (q.visible) {
@@ -59,7 +59,8 @@ class Results extends React.Component{
         for (let user in this.props.answers_data) {
             let answers = this.props.answers_data[user]
             let row_nodes = []
-            row_nodes.push(<td key={"u"}>{user}</td>)
+            row_nodes.push(<td key={"u_first"}>{this.props.answer_users[user].first_name}</td>)
+            row_nodes.push(<td key={"u_last"}>{this.props.answer_users[user].last_name}</td>)
             for (let i = 0; i<this.props.question_list.length; ++i) {
                 let q = this.props.question_list[i]
                 if (q.visible) {
@@ -143,6 +144,7 @@ class FormResults extends React.Component{
                 questions_data: data.questions_data,
                 answers_data: data.answers_data,
                 question_list: question_list,
+                answer_users: data.answer_users,
                 orgs: orgs,
                 loaded: true
             })
@@ -177,8 +179,12 @@ class FormResults extends React.Component{
                     <Select value={this.state.filter_org} placeholder="All" searchable={true} clearable={true}
                             options={this.state.orgs} onChange={this.handleOrgsChange.bind(this)} />
                     <br/>
-                    <Results question_list={this.state.question_list} questions_data={this.state.questions_data}
-                            answers_data={this.state.answers_data}/>
+                    <Results
+                        question_list={this.state.question_list}
+                        questions_data={this.state.questions_data}
+                        answers_data={this.state.answers_data}
+                        answer_users={this.state.answer_users}
+                    />
                 </div>
             )
         } else {

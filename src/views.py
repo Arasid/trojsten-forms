@@ -224,10 +224,17 @@ class ResultsDetail(
             answers_data[answer['user']][answer['question']] = json.loads(answer['ans'])
 
         orgs = User.objects.filter(pk__in=list(users))
-        u_serializer = UserSerializer(orgs, many=True)
+        o_serializer = UserSerializer(orgs, many=True)
+
+        a_users = User.objects.filter(pk__in=answers_data.keys())
+        u_serializer = UserSerializer(a_users, many=True)
+        answers_users = {}
+        for user in u_serializer.data:
+            answers_users[user['id']] = user
 
         response = {
-            "orgs": u_serializer.data,
+            "answer_users": answers_users,
+            "orgs": o_serializer.data,
             "question_list": question_list,
             "questions_data": questions_data,
             "answers_data": answers_data,

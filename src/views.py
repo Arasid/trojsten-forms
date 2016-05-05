@@ -2,6 +2,7 @@ import json
 from rest_framework import viewsets, mixins, views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_bulk import ListBulkCreateUpdateDestroyAPIView
 from .models import Question, Form, Answer
 from django.contrib.auth.models import User, Group
@@ -176,6 +177,63 @@ class FormDetail(
             }
             return Response(response)
         return Response(formSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResultsDetail(
+    views.APIView
+):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, form_id, format=None):
+        form = Form.objects.get(pk=form_id)
+        f_serializer = FormSerializer(form)
+
+        active_user = request.user
+        can_edit = f_serializer.data['can_edit']
+        if not active_user.is_staff:
+            raise PermissionDenied()
+        groups = [g.id for g in active_user.groups.all()]
+        inter = set(can_edit) & set(groups)
+        if len(inter) == 0:
+            raise PermissionDenied()
+
+        questions = Question.objects.filter(form=form_id, active=True)
+        answers = Answer.objects.filter(question__form=form_id)
+        q_serializer = QuestionSerializer(questions, many=True)
+        a_serializer = AnswerSerializer(answers, many=True)
+        structure = json.loads(f_serializer.data['structure'])
+        users = set()
+
+        question_list = []
+        questions_data = {}
+        answers_data = {}
+
+        for x in q_serializer.data:
+            x['options'] = json.loads(x['options'])
+            questions_data[x['q_uuid']] = x
+
+        for x in structure:
+            if x['type'] != 'question':
+                continue
+            question_list.append(x['q_uuid'])
+            users |= set(questions_data[x['q_uuid']]['orgs'])
+
+        for answer in a_serializer.data:
+            if answer['user'] not in answers_data:
+                answers_data[answer['user']] = {}
+            answers_data[answer['user']][answer['question']] = json.loads(answer['ans'])
+
+        orgs = User.objects.filter(pk__in=list(users))
+        u_serializer = UserSerializer(orgs, many=True)
+
+        response = {
+            "orgs": u_serializer.data,
+            "question_list": question_list,
+            "questions_data": questions_data,
+            "answers_data": answers_data,
+            "title": f_serializer.data['title']
+        }
+        return Response(response)
 
 
 class QuestionList(

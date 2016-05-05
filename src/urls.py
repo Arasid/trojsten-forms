@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from .views import FormViewSet, QuestionViewSet, AnswerViewSet, QuestionList, UserAnswerList, AnswerList, UserViewSet, GroupViewSet, FormView, FormDetail
+from .views import FormViewSet, QuestionViewSet, AnswerViewSet, QuestionList, UserAnswerList, AnswerList, UserViewSet, GroupViewSet, FormView, FormDetail, ResultsDetail
 
 router = routers.DefaultRouter()
 router.register(r'user', UserViewSet)
@@ -16,4 +16,5 @@ urlpatterns = [
     url('^user_answers/(?P<form>\d+)/$', UserAnswerList.as_view()),
     url('^whole_form/$', FormView.as_view()),
     url('^whole_form/(?P<form_id>\d+)/$', FormDetail.as_view()),
+    url('^results/(?P<form_id>\d+)/$', ResultsDetail.as_view()),
 ]

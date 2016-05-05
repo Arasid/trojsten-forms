@@ -16,7 +16,7 @@ class TableHeader extends React.Component{
         for (let i = 0; i<this.props.list.length; ++i) {
             let q = this.props.list[i]
             if (q.visible) {
-                let question = this.props.data[q.id]
+                let question = this.props.data[q.q_uuid]
                 let node
                 switch (question.q_type) {
                     case "S":
@@ -63,8 +63,8 @@ class Results extends React.Component{
             for (let i = 0; i<this.props.question_list.length; ++i) {
                 let q = this.props.question_list[i]
                 if (q.visible) {
-                    let question = this.props.questions_data[q.id]
-                    let answer = answers[q.id]
+                    let question = this.props.questions_data[q.q_uuid]
+                    let answer = answers[question.id]
                     row_nodes.push(<td key={"t"+i}>{answer ? answer.text : ""}</td>)
                     switch (question.q_type) {
                         case "S1T":
@@ -120,97 +120,34 @@ class FormResults extends React.Component{
         }
     }
     loadFormFromServer() {
-        let firstPromise = $.ajax({
-            url: "/api/questions/" + this.props.form_id + "/",
+        $.ajax({
+            url: "/api/results/" + this.props.form_id + "/",
             dataType: 'json',
             cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/questions/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-        let secondPromise = $.ajax({
-            url: "/api/form/" + this.props.form_id,
-            dataType: 'json',
-            cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/form/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-        let thirdPromise = $.ajax({
-            url: "/api/answers/" + this.props.form_id + "/",
-            dataType: 'json',
-            cache: false,
-        }).fail( function(xhr, status, err) {
-            console.error("/api/answers/"+this.props.form_id+"/", status, err.toString());
-        }.bind(this))
-
-        $.when(firstPromise, secondPromise, thirdPromise).done(function(firstData, secondData, thirdData) {
-            let data, question_list = [], answers_data = {}, questions_data = {}, users = {}
-
-            //spravim si zoznam otazok podla poradia v ankete
-            data = secondData[0].structure
-            data = JSON.parse(data)
-            for (let i = 0; i<data.length; ++i) {
-                if (data[i].type === 'question') {
-                    question_list.push({
-                        id: data[i].id,
-                        visible: true
-                    })
-                }
-            }
-
-            data = firstData[0]
-            for (let i = 0; i<data.length; ++i) {
-                let question = data[i]
-                for (let j = 0; j<question.orgs.length; j++) {
-                    users[question.orgs[j]] = true
-                }
-                questions_data[question.id] = {
-                    title: question.title,
-                    q_type: question.q_type,
-                    orgs: new Set(question.orgs)
-                }
-            }
-
-            data = thirdData[0]
-            for (let i = 0; i<data.length; ++i) {
-                let answer = data[i]
-                answer.ans = JSON.parse(answer.ans)
-                if (!(answer.user in answers_data)) {
-                    answers_data[answer.user] = {}
-                }
-                answers_data[answer.user][answer.question] = answer.ans
-            }
-
-            let deferreds = []
-            for (let org in users) {
-                deferreds.push(
-                    $.ajax({
-                        url: "/api/user/"+org+"/",
-                        dataType: "json",
-                        cache: false,
-                    }).fail(function(xhr, status, err) {
-                        console.error("/api/user/"+org+"/", status, err.toString()) 
-                    })
-                )
-            }
-            $.when.apply(null, deferreds).done(function() {
-                let all = arguments
-                // problem ak deferreds ma jednu vec, tak arguments nebude pole velkosti jedna, ale rovno ten vysledok
-                if (deferreds.length == 1) {
-                    all = [arguments]
-                }
-                let orgs = []
-                for (let i = 0; i < all.length; ++i) {
-                    let user = all[i][0]
-                    orgs.push({label: user.username, value: user.id})
-                }
-                this.setState({
-                    questions_data: questions_data,
-                    answers_data: answers_data,
-                    question_list: question_list,
-                    orgs: orgs,
-                    loaded: true
+        }).done(function(data) {
+            let question_list = [], orgs = []
+            for (let i = 0; i<data.question_list.length; i++) {
+                question_list.push({
+                    q_uuid: data.question_list[i],
+                    visible: true
                 })
-            }.bind(this))
+            }
+            for (let i = 0; i<data.orgs.length; i++) {
+                orgs.push({
+                    label: data.orgs[i].username,
+                    value: data.orgs[i].id
+                })
+            }
+            this.setState({
+                title: data.title,
+                questions_data: data.questions_data,
+                answers_data: data.answers_data,
+                question_list: question_list,
+                orgs: orgs,
+                loaded: true
+            })
+        }.bind(this)).fail( function(xhr, status, err) {
+            console.error("/api/results/"+this.props.form_id+"/", status, err.toString());
         }.bind(this))
     }
     componentDidMount() {
@@ -221,7 +158,7 @@ class FormResults extends React.Component{
         let question_list = this.state.question_list
         for (let i = 0; i<question_list.length; i++) {
             let q = question_list[i]
-            if (filter_org==="" || this.state.questions_data[q.id].orgs.has(filter_org)) {
+            if (filter_org==="" || this.state.questions_data[q.q_uuid].orgs.indexOf(filter_org) > -1) {
                 q.visible = true
             } else {
                 q.visible = false
@@ -236,6 +173,7 @@ class FormResults extends React.Component{
         if (this.state.loaded) {
             return (
                 <div>
+                    <h3>{this.state.title}</h3>
                     <Select value={this.state.filter_org} placeholder="All" searchable={true} clearable={true}
                             options={this.state.orgs} onChange={this.handleOrgsChange.bind(this)} />
                     <br/>

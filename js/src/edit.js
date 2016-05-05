@@ -637,41 +637,26 @@ class MyForm extends React.Component{
         event.preventDefault()
         let state = {...this.state}
 
-        let promise
-        if (!state.created) {
-            promise = $.ajax({
-                url: "/api/whole_form/",
-                dataType: 'json',
-                type: 'POST',
-                data: JSON.stringify({
-                    form: state.form_data,
-                    questions: state.questions_data
-                }),
-                headers: {
-                    "X-CSRFToken": cookie.get('csrftoken'),
-                    "Content-Type":"application/json; charset=utf-8",
-                }
-            }).fail(function(xhr, status, err) {
-                console.error("/api/whole_form/", status, err.toString())
-            })
-        } else {
-            promise = $.ajax({
-                url: "/api/whole_form/"+state.form_data.id+"/",
-                dataType: 'json',
-                type: 'PUT',
-                data: JSON.stringify({
-                    form: state.form_data,
-                    questions: state.questions_data
-                }),
-                headers: {
-                    "X-CSRFToken": cookie.get('csrftoken'),
-                    "Content-Type":"application/json; charset=utf-8",
-                }
-            }).fail(function(xhr, status, err) {
-                console.error("/api/whole_form/"+state.form_data.id+"/", status, err.toString())
-            })
+        let url = "/api/whole_form/"
+        if (state.created) {
+            url += state.form_data.id + "/"
         }
-        promise.done(function(wholeFormData) {
+
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            type: state.created ? "PUT" : "POST",
+            data: JSON.stringify({
+                form: state.form_data,
+                questions: state.questions_data
+            }),
+            headers: {
+                "X-CSRFToken": cookie.get('csrftoken'),
+                "Content-Type":"application/json; charset=utf-8",
+            }
+        }).fail(function(xhr, status, err) {
+            console.error(url, status, err.toString())
+        }).done(function(wholeFormData) {
             let questions_data = wholeFormData.questions
             let form_data = wholeFormData.form
             this.setState({
@@ -680,7 +665,6 @@ class MyForm extends React.Component{
                 loaded: true,
                 created: true
             })
-
         }.bind(this))
     }
     getUsersPromise() {

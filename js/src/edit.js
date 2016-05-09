@@ -447,11 +447,30 @@ class FormOptions extends React.Component{
     }
 }
 
+class Plus extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    render(){
+        return (
+            <div>
+                <ButtonGroup justified>
+                    <Button href="#" bsStyle="info" bsSize="xsmall" onClick={this.props.handleAdd.bind(this, "question")}>
+                        <Glyphicon glyph="plus" />&nbsp;Question
+                    </Button>
+                    <Button href="#" bsStyle="info" bsSize="xsmall" onClick={this.props.handleAdd.bind(this, "section")}>
+                        <Glyphicon glyph="plus" />&nbsp;Section
+                    </Button>
+                </ButtonGroup>
+                <br/>
+            </div>
+        )
+    }
+}
+
 class FormList extends React.Component{
     constructor(props) {
         super(props)
-        this.updateActiveTopOrd = this.updateActiveTopOrd.bind(this)
-        this.setActiveTopOrd = this.setActiveTopOrd.bind(this)
     }
     handleQuestionChange(id, data) {
         let questions_data = {...this.props.questions_data}
@@ -483,43 +502,14 @@ class FormList extends React.Component{
         form_data.structure[ord] = help
         this.props.handleChange(form_data, this.props.questions_data)
     }
-    setActiveTopOrd(ord) {
-        let activeTopOrd = ord
-        this.props.setTopOrd(ord)
-    }
-    updateActiveTopOrd(ord) {
-        if (this.updateActiveTopOrdHandle != null) { return }
-        this.updateActiveTopOrdHandle = setTimeout(() => {
-            this.updateActiveTopOrdHandle = null
-            this.setActiveTopOrd(ord)
-        })
-    }
-    handleBefore(ord, event) {
-        //idem smerom dole!
-        if (event.previousPosition === "above") {
-            this.updateActiveTopOrd(ord)
-        }
-    }
-    handleAfter(ord, event) {
-        //idem smerom dole!
-        if (event.currentPosition === "above") {
-            this.updateActiveTopOrd(ord+1)
-        }
-    }
     render() {
         let formNodes = []
-        for (let key = 0; key<this.props.form_data.structure.length; key++) {
+        let n = this.props.form_data.structure.length
+        for (let key = 0; key<n; key++) {
             let x = this.props.form_data.structure[key]
             if (x.type !=='question' || this.props.questions_data[x.q_uuid].active) {
-                let node = <ScrollSpy
-                                key={"spy"+key}
-                                ord={key}
-                                handleAfter={this.handleAfter.bind(this, key)}
-                                handleBefore={this.handleBefore.bind(this, key)}
-                />
-                formNodes.push(
-                    node
-                )
+                let node = <Plus key={"plus" + key} handleAdd={this.props.handleAdd.bind(this, key)}/>
+                formNodes.push(node)
 
                 if (x.type==='question') {
                     node = <Question 
@@ -543,6 +533,8 @@ class FormList extends React.Component{
                 )
             }
         }
+        let node = <Plus key={"plus" + n} handleAdd={this.props.handleAdd.bind(this, n)}/>
+        formNodes.push(node)
         return (
             <Form onSubmit={this.props.handleSubmit}>
                 <FormGroup>
@@ -569,26 +561,6 @@ class FormList extends React.Component{
     }
 }
 
-class SidePanel extends React.Component{
-    constructor(props) {
-        super(props)
-    }
-    render() {
-        return (
-            <AutoAffix viewportOffsetTop={20} container={this.props.getMain}>
-                <ButtonGroup vertical>
-                    <Button bsStyle="primary" onClick={this.props.handleAdd.bind(this, "question")}>
-                        <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Question
-                    </Button>
-                    <Button bsStyle="primary" onClick={this.props.handleAdd.bind(this, "section")}>
-                        <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Section
-                    </Button>
-                </ButtonGroup>
-            </AutoAffix>
-        )
-    }
-}
-
 class Loading extends React.Component{
     constructor(props) {
         super(props)
@@ -611,7 +583,6 @@ class MyForm extends React.Component{
             users: [],
             groups: [],
             loaded: false,
-            topOrd: 0,
             created: true
         }
     }
@@ -646,12 +617,7 @@ class MyForm extends React.Component{
             })
         }.bind(this))
     }
-    setTopOrd(ord) {
-        this.setState({
-            topOrd: ord
-        })
-    }
-    addSomething(type) {
+    addSomething(index, type) {
         let state = {...this.state}
         let new_something
         if (type === "section") {
@@ -680,7 +646,7 @@ class MyForm extends React.Component{
             }
             state.questions_data[new_id] = new_data
         }
-        state.form_data.structure.splice(state.topOrd,0,new_something)
+        state.form_data.structure.splice(index,0,new_something)
         this.setState(state)
     }
     handleChange(form_data, questions_data) {
@@ -765,7 +731,6 @@ class MyForm extends React.Component{
                 questions_data: {},
                 users: users,
                 groups: groups,
-                topOrd: 0,
                 loaded: true,
                 form_id: -1,
                 created: false
@@ -786,22 +751,15 @@ class MyForm extends React.Component{
     render() {
         if (this.state.loaded) {
             return (
-                <Row ref="main">
-                    <Col md={10}>
-                        <FormList
-                            form_data={this.state.form_data}
-                            questions_data={this.state.questions_data}
-                            setTopOrd={this.setTopOrd.bind(this)}
-                            users={this.state.users}
-                            groups={this.state.groups}
-                            handleChange={this.handleChange.bind(this)}
-                            handleSubmit={(event) => this.handleFormSubmit(event)}
-                        />
-                    </Col>
-                    <Col md={2}>
-                        <SidePanel getMain={this.getMain.bind(this)} handleAdd={this.addSomething.bind(this)}/>
-                    </Col>
-                </Row>
+                <FormList
+                    form_data={this.state.form_data}
+                    questions_data={this.state.questions_data}
+                    users={this.state.users}
+                    groups={this.state.groups}
+                    handleChange={this.handleChange.bind(this)}
+                    handleSubmit={(event) => this.handleFormSubmit(event)}
+                    handleAdd={this.addSomething.bind(this)}
+                />
             )
         } else {
             return (

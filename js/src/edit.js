@@ -477,6 +477,10 @@ class FormList extends React.Component{
     handleQuestionChange(id, data, valid) {
         let questions_data = {...this.props.questions_data}
         questions_data[id] = data
+        if (!data.active && !valid) {
+            // pretoze nemoze mi vymazana otazka branit ulozit
+            valid = true
+        }
         this.props.handleChange(this.props.form_data, questions_data, {
             valid: valid,
             q_uuid: data.q_uuid
@@ -492,8 +496,11 @@ class FormList extends React.Component{
     }
     handleHeadingDelete(key) {
         let form_data = {...this.props.form_data}
-        form_data.structure.splice(key, 1)
-        this.props.handleChange(form_data, this.props.questions_data)
+        let data = form_data.structure.splice(key, 1)
+        this.props.handleChange(form_data, this.props.questions_data, {
+            valid: true,
+            q_uuid: data[0].q_uuid
+        })
     }
     handleHeaderChange(key, data, valid){
         let form_data = {...this.props.form_data}

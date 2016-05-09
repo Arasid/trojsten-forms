@@ -165,8 +165,9 @@ class FormDetail(
                 q = Question.objects.get(q_uuid=q_uuid)
                 q_serializer = QuestionSerializer(q, data=q_data)
             except Question.DoesNotExist:
+                if not q_data['active']:
+                    return True, None
                 q_serializer = QuestionSerializer(data=q_data)
-                pass
             if q_serializer.is_valid():
                 q_serializer.save()
                 return True, q_serializer.data
@@ -179,12 +180,12 @@ class FormDetail(
                 structure.append(x)
                 continue
             ok, q_data = process_question(x['q_uuid'])
-            if q_data['active']:
-                structure.append(x)
             if not ok:
                 # nastal problem, dalej nerobim
                 return Response(q_data, status=status.HTTP_400_BAD_REQUEST)
             elif q_data is not None:
+                if q_data['active']:
+                    structure.append(x)
                 q_data['options'] = json.loads(q_data['options'])
                 questions_data[q_data['q_uuid']] = q_data
 

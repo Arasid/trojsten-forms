@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Question, Form, Answer
 from django.contrib.auth.models import User, Group
 from .serializers import QuestionSerializer, FormSerializer, AnswerSerializer, UserSerializer, GroupSerializer
-from .permissions import IsRightGroup, IsStaff
+from .permissions import IsRightGroup, IsStaff, NotAfterDeadline
 
 
 class UserViewSet(
@@ -131,7 +131,7 @@ class FormView(
 class FormDetail(
     views.APIView
 ):
-    permission_classes = (IsAuthenticated, IsRightGroup, IsStaff, )
+    permission_classes = (IsAuthenticated, IsRightGroup, IsStaff, NotAfterDeadline, )
 
     def get(self, request, form_id, format=None):
         form = Form.objects.get(pk=form_id)
@@ -205,7 +205,7 @@ class FormDetail(
 class FillForm(
     views.APIView
 ):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, NotAfterDeadline,)
 
     def get(self, request, form_id, format=None):
         user = request.user

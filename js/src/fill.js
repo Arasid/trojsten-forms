@@ -181,14 +181,25 @@ class Question extends React.Component{
     }
 }
 
-class Section extends React.Component{
+class Heading extends React.Component{
     constructor(props) {
         super(props)
     }
     render() {
+        let h
+        switch (this.props.type) {
+            case "section":
+                h = <h3>{this.props.data.title}</h3>
+                break
+            case "title":
+                h = <h4>{this.props.data.title}</h4>
+                break
+            default:
+                console.error("Type of heading " + this.props.type + " does not exist.")
+        }
         return (
             <FormGroup>
-                <h3>{this.props.data.title}</h3>
+                {h}
                 <HelpBlock>{this.props.data.description}</HelpBlock>
                 <hr/>
             </FormGroup>
@@ -225,8 +236,8 @@ class FormList extends React.Component{
                             answer={this.props.answers_data[q_data.id] ? this.props.answers_data[q_data.id].ans : {}}
                             handleChange={this.handleChange.bind(this, q_data.id)}
                 />
-            } else if (x.type==='section') {
-                node = <Section key={key} data={x.data} />
+            } else if (x.type==='section' || x.type==='title') {
+                node = <Heading key={key} data={x.data} type={x.type}/>
             }
             formNodes.push(
                 node

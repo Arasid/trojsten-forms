@@ -376,7 +376,7 @@ class Question extends React.Component{
     }
 }
 
-class Section extends React.Component{
+class Heading extends React.Component{
     constructor(props) {
         super(props)
     }
@@ -386,15 +386,28 @@ class Section extends React.Component{
         this.props.handleChange(data)
     }
     render() {
+        let name, Name
+        switch (this.props.type) {
+            case "section":
+                name = 'section'
+                Name = 'Section'
+                break
+            case "title":
+                name = 'title'
+                Name = 'Ttitle'
+                break
+            default:
+                console.error("Type of heading " + this.props.type + " does not exist.")
+        }
         return (
             <Panel className="form-group">
                 <InputHeader
                         title={this.props.data.title}
-                        titleLabel="Section name:"
-                        titlePlaceholder="Untitled section"
+                        titleLabel={Name + " name:"}
+                        titlePlaceholder={"Untitled " + name}
                         description={this.props.data.description}
-                        descriptionLabel="Section description:"
-                        descriptionPlaceholder="Section description"
+                        descriptionLabel={Name + " description:"}
+                        descriptionPlaceholder={Name + " description"}
                         handleChange={this.handleChange.bind(this)}
                 />
                 <ListGroup fill={true}>
@@ -458,6 +471,9 @@ class Plus extends React.Component{
                     <Button href="#" bsStyle="info" bsSize="xsmall" onClick={this.props.handleAdd.bind(this, "section")}>
                         <Glyphicon glyph="plus" />&nbsp;Section
                     </Button>
+                    <Button href="#" bsStyle="info" bsSize="xsmall" onClick={this.props.handleAdd.bind(this, "title")}>
+                        <Glyphicon glyph="plus" />&nbsp;Title
+                    </Button>
                 </ButtonGroup>
                 <br/>
             </div>
@@ -474,12 +490,12 @@ class FormList extends React.Component{
         questions_data[id] = data
         this.props.handleChange(this.props.form_data,questions_data)
     }
-    handleSectionChange(key, data) {
+    handleHeadingChange(key, data) {
         let form_data = {...this.props.form_data}
         form_data.structure[key].data = data
         this.props.handleChange(form_data, this.props.questions_data)
     }
-    handleSectionDelete(key) {
+    handleHeadingDelete(key) {
         let form_data = {...this.props.form_data}
         form_data.structure.splice(key, 1)
         this.props.handleChange(form_data, this.props.questions_data)
@@ -516,13 +532,14 @@ class FormList extends React.Component{
                                 handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
                                 handlePosition={this.handlePosition.bind(this, key)}
                     />
-                } else if (x.type==='section') {
-                    node = <Section 
+                } else if (x.type==='section' || x.type==='title') {
+                    node = <Heading 
                                 key={key} 
                                 data={x.data} 
-                                handleChange={this.handleSectionChange.bind(this, key)}
+                                type={x.type}
+                                handleChange={this.handleHeadingChange.bind(this, key)}
                                 handlePosition={this.handlePosition.bind(this, key)}
-                                handleDelete={this.handleSectionDelete.bind(this, key)}
+                                handleDelete={this.handleHeadingDelete.bind(this, key)}
                     />
                 }
                 formNodes.push(
@@ -617,9 +634,9 @@ class MyForm extends React.Component{
     addSomething(index, type) {
         let state = {...this.state}
         let new_something
-        if (type === "section") {
+        if (type === "section" || type === "title") {
             new_something = {
-                type: "section",
+                type: type,
                 data: {
                     description: "",
                     title: ""

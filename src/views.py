@@ -159,9 +159,6 @@ class FormDetail(
 
         def process_question(q_uuid):
             q_data = questions[q_uuid]
-            if not q_data['active']:
-                return True, None
-
             q_serializer = None
             try:
                 q_data['options'] = json.dumps(q_data['options'])

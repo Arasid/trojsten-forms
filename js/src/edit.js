@@ -2,8 +2,6 @@ import React from "react"
 import ReactDOM from "react-dom"
 import $ from 'jquery'
 import cookie from 'cookies-js'
-import { AutoAffix } from 'react-overlays'
-import Waypoint from 'react-waypoint'
 import Select from 'react-select'
 import { Clearfix, Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
@@ -13,24 +11,16 @@ import 'react-select/dist/react-select.min.css'
 import moment from 'moment'
 import uuid from 'uuid'
 
-class ScrollSpy extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-    render() {
-        return (
-            <Waypoint
-                onEnter = {this.props.handleBefore.bind(this)}
-                onLeave = {this.props.handleAfter.bind(this)}
-                threshold = {-0.02}
-            />
-        )
-    }
-}
-
 class InputHeader extends React.Component{
     constructor(props) {
         super(props)
+    }
+    handleChange(key, value) {
+        let valid = true
+        if (key === "title") {
+            valid = (value.length > 0)
+        }
+        this.props.handleChange(key, value, valid)
     }
     render(){
         return (
@@ -40,14 +30,14 @@ class InputHeader extends React.Component{
                         label={this.props.titleLabel}
                         value={this.props.title}
                         placeholder={this.props.titlePlaceholder}
-                        handleChange={this.props.handleChange.bind(this, "title")}
+                        handleChange={this.handleChange.bind(this, "title")}
                     />
                 </FormGroup>
                 <SmallInput
                     label={this.props.descriptionLabel}
                     value={this.props.description}
                     placeholder={this.props.descriptionPlaceholder}
-                    handleChange={this.props.handleChange.bind(this, "description")}
+                    handleChange={this.handleChange.bind(this, "description")}
                     bsSize="small"
                 />
             </FormGroup>
@@ -278,10 +268,10 @@ class Question extends React.Component{
         }
         this.props.handleChange(data)
     }
-    handleDataChange(key, value) {
+    handleDataChange(key, value, valid) {
         let data = {...this.props.data}
         data[key] = value
-        this.props.handleChange(data)
+        this.props.handleChange(data, valid)
     }
     handleOrgsChange(all) {
         let data = {...this.props.data}
@@ -297,27 +287,26 @@ class Question extends React.Component{
         let opt
         switch (this.props.data.q_type) {
             case "S":
-                ans = <ShortAnswer id={this.props.data.id}/>
+                ans = <ShortAnswer/>
                 break
             case "L":
-                ans = <LongAnswer id={this.props.data.id}/>
+                ans = <LongAnswer/>
                 break
             case "MC":
                 ans = <MultipleChoice
-                            id={this.props.data.id}
                             options={this.props.data.options}
                             handleChange={this.handleDataChange.bind(this, 'options')}
                 />
                 break
             case "S1T":
-                ans = <ScaleTextAnswer id={this.props.data.id} options={this.props.data.options} />
+                ans = <ScaleTextAnswer options={this.props.data.options} />
                 opt = <OneScalerOption
                             options={this.props.data.options}
                             handleChange={this.handleDataChange.bind(this, 'options')}
                 />
                 break
             case "S2T":
-                ans = <TwoScalesTextAnswer id={this.props.data.id} options={this.props.data.options} />
+                ans = <TwoScalesTextAnswer options={this.props.data.options} />
                 opt = <TwoScalerOptions
                             options={this.props.data.options}
                             handleChange={this.handleDataChange.bind(this, 'options')}
@@ -380,10 +369,10 @@ class Heading extends React.Component{
     constructor(props) {
         super(props)
     }
-    handleChange(key, value){
+    handleChange(key, value, valid){
         let data = {...this.props.data}
         data[key] = value
-        this.props.handleChange(data)
+        this.props.handleChange(data, valid)
     }
     render() {
         let name, Name
@@ -485,25 +474,34 @@ class FormList extends React.Component{
     constructor(props) {
         super(props)
     }
-    handleQuestionChange(id, data) {
+    handleQuestionChange(id, data, valid) {
         let questions_data = {...this.props.questions_data}
         questions_data[id] = data
-        this.props.handleChange(this.props.form_data,questions_data)
+        this.props.handleChange(this.props.form_data, questions_data, {
+            valid: valid,
+            q_uuid: data.q_uuid
+        })
     }
-    handleHeadingChange(key, data) {
+    handleHeadingChange(key, data, valid) {
         let form_data = {...this.props.form_data}
         form_data.structure[key].data = data
-        this.props.handleChange(form_data, this.props.questions_data)
+        this.props.handleChange(form_data, this.props.questions_data, {
+            valid: valid,
+            q_uuid: form_data.structure[key].q_uuid
+        })
     }
     handleHeadingDelete(key) {
         let form_data = {...this.props.form_data}
         form_data.structure.splice(key, 1)
         this.props.handleChange(form_data, this.props.questions_data)
     }
-    handleHeaderChange(key, value){
+    handleHeaderChange(key, data, valid){
         let form_data = {...this.props.form_data}
-        form_data[key] = value
-        this.props.handleChange(form_data, this.props.questions_data)
+        form_data[key] = data
+        this.props.handleChange(form_data, this.props.questions_data, {
+            valid: valid,
+            q_uuid: -1
+        })
     }
     handlePosition(ord, dir) {
         let form_data = {...this.props.form_data}
@@ -537,6 +535,7 @@ class FormList extends React.Component{
                                 key={x.q_uuid} 
                                 data={x.data} 
                                 type={x.type}
+                                q_uuid={x.q_uuid}
                                 handleChange={this.handleHeadingChange.bind(this, index)}
                                 handlePosition={this.handlePosition.bind(this, index)}
                                 handleDelete={this.handleHeadingDelete.bind(this, index)}
@@ -569,7 +568,7 @@ class FormList extends React.Component{
                     />
                 </FormGroup>
                 {formNodes}
-                <Button type="submit" bsStyle="primary" bsSize="large">Save</Button>
+                <Button type="submit" bsStyle="primary" bsSize="large" disabled={!this.props.valid}>Save</Button>
             </Form>
         )
     }
@@ -597,7 +596,8 @@ class MyForm extends React.Component{
             users: [],
             groups: [],
             loaded: false,
-            created: true
+            created: true,
+            notValid: new Set()
         }
     }
     loadFormFromServer() {
@@ -662,12 +662,20 @@ class MyForm extends React.Component{
             state.questions_data[new_id] = new_data
         }
         state.form_data.structure.splice(index,0,new_something)
+        state.notValid.add(new_id)
         this.setState(state)
     }
-    handleChange(form_data, questions_data) {
+    handleChange(form_data, questions_data, validObj) {
+        let notValid = this.state.notValid
+        if (validObj.valid) {
+            notValid.delete(validObj.q_uuid)
+        } else {
+            notValid.add(validObj.q_uuid)
+        }
         this.setState({
             form_data: form_data,
-            questions_data: questions_data
+            questions_data: questions_data,
+            notValid: notValid
         })
     }
     handleFormSubmit(event) {
@@ -748,7 +756,8 @@ class MyForm extends React.Component{
                 groups: groups,
                 loaded: true,
                 form_id: -1,
-                created: false
+                created: false,
+                notValid: new Set()
             })
         }.bind(this))
 
@@ -774,6 +783,7 @@ class MyForm extends React.Component{
                     handleChange={this.handleChange.bind(this)}
                     handleSubmit={(event) => this.handleFormSubmit(event)}
                     handleAdd={this.addSomething.bind(this)}
+                    valid={this.state.notValid.size === 0}
                 />
             )
         } else {

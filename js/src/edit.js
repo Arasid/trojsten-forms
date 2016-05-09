@@ -5,7 +5,7 @@ import cookie from 'cookies-js'
 import { AutoAffix } from 'react-overlays'
 import Waypoint from 'react-waypoint'
 import Select from 'react-select'
-import { Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
+import { Clearfix, Form, Glyphicon, ControlLabel, FormControl, FormGroup, HelpBlock, ButtonGroup, Well, Accordion, Button, ListGroupItem, ListGroup, Col, Row, PanelGroup, Panel } from 'react-bootstrap'
 import { BigInput, SmallInput, Scaler } from './components.js'
 import DateTimeField from "react-bootstrap-datetimepicker"
 import 'react-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'
@@ -229,6 +229,34 @@ class TwoScalerOptions extends React.Component{
     }
 }
 
+class FormItemControl extends React.Component{
+    constructor(props) {
+        super(props)
+    }
+    render() {
+        return (
+            <ListGroupItem>
+                <Clearfix>
+                    <Button onClick={this.props.handleDelete.bind(this)} className="pull-left">
+                        <Glyphicon glyph="trash" />
+                    </Button>
+                    <div className="pull-left">
+                        {this.props.children}
+                    </div>
+                    <ButtonGroup className="pull-right">
+                        <Button onClick={this.props.handlePosition.bind(this, -1)}>
+                            <Glyphicon glyph="chevron-up" />
+                        </Button>
+                        <Button onClick={this.props.handlePosition.bind(this, +1)}>
+                            <Glyphicon glyph="chevron-down" />
+                        </Button>
+                    </ButtonGroup>
+                </Clearfix>
+            </ListGroupItem>
+        )
+    }
+}
+
 class Question extends React.Component{
     constructor(props) {
         super(props)
@@ -325,39 +353,23 @@ class Question extends React.Component{
                     {ans}
                 </Panel>
                 <ListGroup fill={true}>
-                    <ListGroupItem>
-                        <Row>
-                            <Col md={1}>
-                                <Button onClick={(event) => this.handleDataChange('active', false)}>
-                                    <Glyphicon glyph="trash" />
-                                </Button>
-                            </Col>
-                            <Col md={4}>
-                                <FormControl
-                                    componentClass="select"
-                                    value={this.props.data.q_type} 
-                                    placeholder="select"
-                                    onChange={(event)=>this.handleTypeChange(event)}
-                                >
-                                    <option value="S">Short answer</option>
-                                    <option value="L">Long answer</option>
-                                    <option value="MC">Multiple choice</option>
-                                    <option value="S1T">Scale with text answer</option>
-                                    <option value="S2T">Two scales with text answer</option>
-                                </FormControl>
-                            </Col>
-                            <Col md={2} mdOffset={5}>
-                                <ButtonGroup>
-                                    <Button onClick={this.props.handlePosition.bind(this, -1)}>
-                                        <Glyphicon glyph="chevron-up" />
-                                    </Button>
-                                    <Button onClick={this.props.handlePosition.bind(this, +1)}>
-                                        <Glyphicon glyph="chevron-down" />
-                                    </Button>
-                                </ButtonGroup>
-                            </Col>
-                        </Row>
-                    </ListGroupItem>
+                    <FormItemControl
+                        handleDelete={(event) => this.handleDataChange('active', false)}
+                        handlePosition={this.props.handlePosition.bind(this)}
+                    >
+                        <FormControl
+                            componentClass="select"
+                            value={this.props.data.q_type} 
+                            placeholder="select"
+                            onChange={(event)=>this.handleTypeChange(event)}
+                        >
+                            <option value="S">Short answer</option>
+                            <option value="L">Long answer</option>
+                            <option value="MC">Multiple choice</option>
+                            <option value="S1T">Scale with text answer</option>
+                            <option value="S2T">Two scales with text answer</option>
+                        </FormControl>
+                    </FormItemControl>
                 </ListGroup>
             </Panel>
         )
@@ -386,25 +398,10 @@ class Section extends React.Component{
                         handleChange={this.handleChange.bind(this)}
                 />
                 <ListGroup fill={true}>
-                    <ListGroupItem>
-                        <Row>
-                            <Col md={1}>
-                                <Button onClick={this.props.handleDelete.bind(this)}>
-                                    <Glyphicon glyph="trash" />
-                                </Button>
-                            </Col>
-                            <Col md={2} mdOffset={9}>
-                                <ButtonGroup>
-                                    <Button onClick={this.props.handlePosition.bind(this, -1)}>
-                                        <Glyphicon glyph="chevron-up" />
-                                    </Button>
-                                    <Button onClick={this.props.handlePosition.bind(this, +1)}>
-                                        <Glyphicon glyph="chevron-down" />
-                                    </Button>
-                                </ButtonGroup>
-                            </Col>
-                        </Row>
-                    </ListGroupItem>
+                    <FormItemControl
+                        handleDelete={this.props.handleDelete.bind(this)}
+                        handlePosition={this.props.handlePosition.bind(this)}
+                    />
                 </ListGroup>
             </Panel>
         )

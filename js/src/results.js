@@ -20,19 +20,19 @@ class TableHeader extends React.Component{
                 let node
                 switch (question.q_type) {
                     case "S":
-                        node = <th key={i}>{question.title}</th>
+                        node = <th key={q.q_uuid}>{question.title}</th>
                         break
                     case "L":
-                        node = <th key={i}>{question.title}</th>
+                        node = <th key={q.q_uuid}>{question.title}</th>
                         break
                     case "MC":
-                        node = <th key={i}>{question.title}</th>
+                        node = <th key={q.q_uuid}>{question.title}</th>
                         break
                     case "S1T":
-                        node = <th colSpan="2" key={i}>{question.title}</th>
+                        node = <th colSpan="2" key={q.q_uuid}>{question.title}</th>
                         break
                     case "S2T":
-                        node = <th colSpan="3" key={i}>{question.title}</th>
+                        node = <th colSpan="3" key={q.q_uuid}>{question.title}</th>
                         break
                     default:
                         console.error("Type of question " + question.q_type + " does not exist.")
@@ -66,14 +66,14 @@ class Results extends React.Component{
                 if (q.visible) {
                     let question = this.props.questions_data[q.q_uuid]
                     let answer = answers[question.id]
-                    row_nodes.push(<td key={"t"+i}>{answer ? answer.text : ""}</td>)
+                    row_nodes.push(<td key={"t"+q.q_uuid}>{answer ? answer.text : ""}</td>)
                     switch (question.q_type) {
                         case "S1T":
-                            row_nodes.push(<td key={"s1"+i}>{answer ? answer.scaler1 : ""}</td>)
+                            row_nodes.push(<td key={"s1"+q.q_uuid}>{answer ? answer.scaler1 : ""}</td>)
                             break
                         case "S2T":
-                            row_nodes.push(<td key={"s1"+i}>{answer ? answer.scaler1 : ""}</td>)
-                            row_nodes.push(<td key={"s2"+i}>{answer ? answer.scaler2 : ""}</td>)
+                            row_nodes.push(<td key={"s1"+q.q_uuid}>{answer ? answer.scaler1 : ""}</td>)
+                            row_nodes.push(<td key={"s2"+q.q_uuid}>{answer ? answer.scaler2 : ""}</td>)
                             break
                     }
                 }

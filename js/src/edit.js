@@ -518,28 +518,28 @@ class FormList extends React.Component{
     render() {
         let formNodes = []
         let n = this.props.form_data.structure.length
-        for (let key = 0; key<n; key++) {
-            let x = this.props.form_data.structure[key]
+        for (let index = 0; index<n; index++) {
+            let x = this.props.form_data.structure[index]
             if (x.type !=='question' || this.props.questions_data[x.q_uuid].active) {
-                let node = <Plus key={"plus" + key} handleAdd={this.props.handleAdd.bind(this, key)}/>
+                let node = <Plus key={"plus" + index} handleAdd={this.props.handleAdd.bind(this, index)}/>
                 formNodes.push(node)
 
                 if (x.type==='question') {
                     node = <Question 
-                                key={key}
+                                key={x.q_uuid}
                                 data={this.props.questions_data[x.q_uuid]}
                                 users={this.props.users}
                                 handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
-                                handlePosition={this.handlePosition.bind(this, key)}
+                                handlePosition={this.handlePosition.bind(this, index)}
                     />
                 } else if (x.type==='section' || x.type==='title') {
                     node = <Heading 
-                                key={key} 
+                                key={x.q_uuid} 
                                 data={x.data} 
                                 type={x.type}
-                                handleChange={this.handleHeadingChange.bind(this, key)}
-                                handlePosition={this.handlePosition.bind(this, key)}
-                                handleDelete={this.handleHeadingDelete.bind(this, key)}
+                                handleChange={this.handleHeadingChange.bind(this, index)}
+                                handlePosition={this.handlePosition.bind(this, index)}
+                                handleDelete={this.handleHeadingDelete.bind(this, index)}
                     />
                 }
                 formNodes.push(
@@ -634,16 +634,17 @@ class MyForm extends React.Component{
     addSomething(index, type) {
         let state = {...this.state}
         let new_something
+        let new_id = uuid.v1()
         if (type === "section" || type === "title") {
             new_something = {
                 type: type,
+                q_uuid: new_id,
                 data: {
                     description: "",
                     title: ""
                 } 
             }
         } else {
-            let new_id = uuid.v1()
             new_something = {
                 type: "question",
                 q_uuid: new_id

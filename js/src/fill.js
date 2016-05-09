@@ -225,19 +225,19 @@ class FormList extends React.Component{
     }
     render() {
         let formNodes = []
-        for (let key = 0; key<this.props.form_data.structure.length; key++) {
-            let x = this.props.form_data.structure[key]
+        for (let index = 0; index<this.props.form_data.structure.length; index++) {
+            let x = this.props.form_data.structure[index]
             let node
             if (x.type==='question') {
                 let q_data = this.props.questions_data[x.q_uuid]
                 node = <Question
-                            key={key}
+                            key={x.q_uuid}
                             data={q_data}
                             answer={this.props.answers_data[q_data.id] ? this.props.answers_data[q_data.id].ans : {}}
                             handleChange={this.handleChange.bind(this, q_data.id)}
                 />
             } else if (x.type==='section' || x.type==='title') {
-                node = <Heading key={key} data={x.data} type={x.type}/>
+                node = <Heading key={x.q_uuid} data={x.data} type={x.type}/>
             }
             formNodes.push(
                 node

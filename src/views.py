@@ -163,6 +163,10 @@ class FormDetail(
             try:
                 q_data['options'] = json.dumps(q_data['options'])
                 q = Question.objects.get(q_uuid=q_uuid)
+                # taky oser, ze ked vymazu otazku, a predtym je vymazu meno,
+                # tak do DB nemozem vlozit prazdne meno, tak necham stare
+                if len(q_data['title']) == 0:
+                    q_data['title'] = q.title
                 q_serializer = QuestionSerializer(q, data=q_data)
             except Question.DoesNotExist:
                 if not q_data['active']:

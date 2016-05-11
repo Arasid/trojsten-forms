@@ -13,7 +13,7 @@ export class Scaler extends React.Component {
     }
     render() {
         let scaleNodes = []
-        for (let i = parseInt(this.props.options.min); i <= parseInt(this.props.options.max); i++) { 
+        for (let i = this.props.options.min; i <= this.props.options.max; i++) { 
             let node = (
                 <Button
                     key={i}

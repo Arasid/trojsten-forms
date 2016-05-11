@@ -329,11 +329,11 @@ class ScalerOption extends React.Component{
         let hard_max = 10
         let hard_min = 0
         let all_min = [], all_max=[]
-        for (let i=hard_min; i<parseInt(this.props.scaler.max); ++i) {
+        for (let i=hard_min; i<this.props.scaler.max; ++i) {
             let node = <option key={i} value={i}>{i}</option>
             all_min.push(node)
         }
-        for (let i=parseInt(this.props.scaler.min)+1; i<=hard_max; ++i) {
+        for (let i=this.props.scaler.min+1; i<=hard_max; ++i) {
             let node = <option key={i} value={i}>{i}</option>
             all_max.push(node)
         }
@@ -345,7 +345,7 @@ class ScalerOption extends React.Component{
                         groupClassName="group-class"
                         value={this.props.scaler.min}
                         componentClass="select"
-                        onChange={(event)=>this.handleChange("min", event.target.value)}
+                        onChange={(event)=>this.handleChange("min", parseInt(event.target.value))}
                     >
                         {all_min}
                     </FormControl>
@@ -356,7 +356,7 @@ class ScalerOption extends React.Component{
                         groupClassName="group-class"
                         value={this.props.scaler.max}
                         componentClass="select"
-                        onChange={(event)=>this.handleChange("max", event.target.value)}
+                        onChange={(event)=>this.handleChange("max", parseInt(event.target.value))}
                     >
                         {all_max}
                     </FormControl>

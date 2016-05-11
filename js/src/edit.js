@@ -10,17 +10,228 @@ import 'react-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'
 import 'react-select/dist/react-select.min.css'
 import moment from 'moment'
 import uuid from 'uuid'
+import tv4 from 'tv4'
+
+tv4.addFormat('datetime', function (data, schema) {
+    let datetimeRegex = /^\d\d\d\d-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])T(00|[0-9]|1[0-9]|2[0-3]):([0-9]|[0-5][0-9]):([0-9]|[0-5][0-9])Z$/
+    if (typeof data !== 'string' || !datetimeRegex.test(data)) {
+        // return error message
+        return 'value must be string of the form: YYYY-MM-DDTHH:mm:ssZ'
+    }
+    return null
+})
+let structureSchema = {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "heading": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["section", "title"],
+                },
+                "q_uuid": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["title"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["type", "q_uuid", "data"]
+        },
+        "question": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["question"],
+                },
+                "q_uuid": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["type", "q_uuid"]
+        }
+    },
+
+    "type": "array",
+    "title": "structure",
+    "items": {
+        "oneOf": [
+            { "$ref": "#/definitions/heading"},
+            { "$ref": "#/definitions/question"}
+        ]
+    }
+}
+tv4.addSchema("structure.json", structureSchema)
+let formDataSchema = {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "title": {
+            "type": "string",
+            "minLength": 1
+        },
+        "description": {
+            "type": "string"
+        },
+        "deadline": {
+            "type": "string",
+            "format": "datetime"
+        },
+        "structure": {
+            "$ref": "structure.json"
+        },
+        "can_edit": {
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "uniqueItems": true
+        }
+    },
+    "additionalProperties": false,
+    "required": ["title", "description", "deadline", "structure", "can_edit"]
+}
+
+let question_schema = {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "question",
+    "definitions": {
+        "scaler": {
+            "type": "object",
+            "properties": {
+                "label_min": { "type": "string" },
+                "label_max": { "type": "string" },
+                "min": { "type": "integer" },
+                "max": { "type": "integer" }
+            },
+            "required": ["label_min", "label_max", "min", "max"],
+            "additionalProperties": false
+        },
+        "checkActive": {
+            "oneOf": [
+                {
+                    "properties": {
+                        "active": { "type": "boolean", "enum": [true] },
+                        "title": { "type": "string", "minLength": 1 }
+                    }
+                }, {
+                    "properties": {
+                        "active": { "type": "boolean", "enum": [false] },
+                        "title": { "type": "string", "minLength": 0 }
+                    }
+                }
+            ]
+        },
+        "checkAll": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "integer", "minimum": 1 },
+                "form": { "type": "integer", "minimum": 1 },
+                "q_uuid": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                },
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "orgs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "uniqueItems": true
+                },
+                "active": { "type": "boolean" },
+                "options": { "type": "object" },
+                "q_type": { "type": "string", "enum": ["S", "L", "S1T", "S2T"] }
+            },
+            "required": ["q_uuid", "title", "description", "orgs", "q_type", "options", "active"],
+            "additionalProperties": false,
+
+        },
+        "checkOptions": {
+            "oneOf": [
+                {
+                    "properties": {
+                        "q_type": { "enum": ["S"] },
+                        "options": { "additionalProperties": false }
+                    }
+                }, {
+                    "properties": {
+                        "q_type": { "enum": ["L"] },
+                        "options": { "additionalProperties": false }
+                    }
+                }, {
+                    "properties": {
+                        "q_type": { "enum": ["S1T"] },
+                        "options": {
+                            "properties": {
+                                "scaler1": { "$ref": "#/definitions/scaler" }
+                            },
+                            "required": ["scaler1"],
+                            "additionalProperties": false
+                        }
+                    }
+                }, {
+                    "properties": {
+                        "q_type": { "enum": ["S2T"] },
+                        "options": {
+                            "properties": {
+                                "scaler1": { "$ref": "#/definitions/scaler" },
+                                "scaler2": { "$ref": "#/definitions/scaler" }
+                            },
+                            "required": ["scaler1", "scaler2"],
+                            "additionalProperties": false
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "type": "object",
+    "allOf": [
+        { "$ref": "#/definitions/checkAll" },
+        { "$ref": "#/definitions/checkOptions" },
+        { "$ref": "#/definitions/checkActive" }
+    ]
+}
+tv4.addSchema("question.json", question_schema)
+let questionsDataSchema = {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "patternProperties": {
+        "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$": {
+            "$ref": "question.json"
+        }
+    },
+    "additionalProperties": false
+}
 
 class InputHeader extends React.Component{
     constructor(props) {
         super(props)
-    }
-    handleChange(key, value) {
-        let valid = true
-        if (key === "title") {
-            valid = (value.length > 0)
-        }
-        this.props.handleChange(key, value, valid)
     }
     render(){
         return (
@@ -30,14 +241,14 @@ class InputHeader extends React.Component{
                         label={this.props.titleLabel}
                         value={this.props.title}
                         placeholder={this.props.titlePlaceholder}
-                        handleChange={this.handleChange.bind(this, "title")}
+                        handleChange={this.props.handleChange.bind(this, "title")}
                     />
                 </FormGroup>
                 <SmallInput
                     label={this.props.descriptionLabel}
                     value={this.props.description}
                     placeholder={this.props.descriptionPlaceholder}
-                    handleChange={this.handleChange.bind(this, "description")}
+                    handleChange={this.props.handleChange.bind(this, "description")}
                     bsSize="small"
                 />
             </FormGroup>
@@ -268,10 +479,10 @@ class Question extends React.Component{
         }
         this.props.handleChange(data)
     }
-    handleDataChange(key, value, valid) {
+    handleDataChange(key, value) {
         let data = {...this.props.data}
         data[key] = value
-        this.props.handleChange(data, valid)
+        this.props.handleChange(data)
     }
     handleOrgsChange(all) {
         let data = {...this.props.data}
@@ -369,10 +580,10 @@ class Heading extends React.Component{
     constructor(props) {
         super(props)
     }
-    handleChange(key, value, valid){
+    handleChange(key, value){
         let data = {...this.props.data}
         data[key] = value
-        this.props.handleChange(data, valid)
+        this.props.handleChange(data)
     }
     render() {
         let name, Name
@@ -474,25 +685,15 @@ class FormList extends React.Component{
     constructor(props) {
         super(props)
     }
-    handleQuestionChange(id, data, valid) {
+    handleQuestionChange(id, data) {
         let questions_data = {...this.props.questions_data}
         questions_data[id] = data
-        if (!data.active && !valid) {
-            // pretoze nemoze mi vymazana otazka branit ulozit
-            valid = true
-        }
-        this.props.handleChange(this.props.form_data, questions_data, {
-            valid: valid,
-            q_uuid: data.q_uuid
-        })
+        this.props.handleChange(this.props.form_data, questions_data)
     }
-    handleHeadingChange(key, data, valid) {
+    handleHeadingChange(key, data) {
         let form_data = {...this.props.form_data}
         form_data.structure[key].data = data
-        this.props.handleChange(form_data, this.props.questions_data, {
-            valid: valid,
-            q_uuid: form_data.structure[key].q_uuid
-        })
+        this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeadingDelete(key) {
         let form_data = {...this.props.form_data}
@@ -502,13 +703,10 @@ class FormList extends React.Component{
             q_uuid: data[0].q_uuid
         })
     }
-    handleHeaderChange(key, data, valid){
+    handleHeaderChange(key, data){
         let form_data = {...this.props.form_data}
         form_data[key] = data
-        this.props.handleChange(form_data, this.props.questions_data, {
-            valid: valid,
-            q_uuid: -1
-        })
+        this.props.handleChange(form_data, this.props.questions_data)
     }
     handlePosition(ord, dir) {
         let form_data = {...this.props.form_data}
@@ -604,7 +802,7 @@ class MyForm extends React.Component{
             groups: [],
             loaded: false,
             created: true,
-            notValid: new Set()
+            valid: true
         }
     }
     loadFormFromServer() {
@@ -669,20 +867,17 @@ class MyForm extends React.Component{
             state.questions_data[new_id] = new_data
         }
         state.form_data.structure.splice(index,0,new_something)
-        state.notValid.add(new_id)
-        this.setState(state)
+        this.handleChange(state.form_data, state.questions_data)
     }
-    handleChange(form_data, questions_data, validObj) {
-        let notValid = this.state.notValid
-        if (validObj.valid) {
-            notValid.delete(validObj.q_uuid)
-        } else {
-            notValid.add(validObj.q_uuid)
-        }
+    handleChange(form_data, questions_data) {
+        let valid = tv4.validate(form_data, formDataSchema) 
+        console.log(tv4.error)
+        valid = valid && tv4.validate(questions_data, questionsDataSchema)
+        console.log(tv4.error)
         this.setState({
             form_data: form_data,
             questions_data: questions_data,
-            notValid: notValid
+            valid: valid
         })
     }
     handleFormSubmit(event) {
@@ -764,7 +959,7 @@ class MyForm extends React.Component{
                 loaded: true,
                 form_id: -1,
                 created: false,
-                notValid: new Set()
+                valid: true
             })
         }.bind(this))
 
@@ -790,7 +985,7 @@ class MyForm extends React.Component{
                     handleChange={this.handleChange.bind(this)}
                     handleSubmit={(event) => this.handleFormSubmit(event)}
                     handleAdd={this.addSomething.bind(this)}
-                    valid={this.state.notValid.size === 0}
+                    valid={this.state.valid}
                 />
             )
         } else {

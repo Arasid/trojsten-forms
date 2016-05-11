@@ -17,8 +17,8 @@
     "react-bootstrap-datetimepicker": "0.0.22",
     "react-dom": "^15.0.1",
     "react-select": "^1.0.0-beta12",
-    "react-waypoint": "^2.0.1",
     "style-loader": "^0.13.1",
+    "tv4": "^1.2.7",
     "uuid": "^2.0.2"
   },
   "devDependencies": {

@@ -468,7 +468,11 @@ class Question extends React.Component{
         data.q_type = q_type
         if (q_type==="S1T" || q_type==="S2T") {
             let scalers = ["scaler1"]
-            if (q_type==="S2T") scalers.push("scaler2")
+            if (q_type==="S2T") {
+                scalers.push("scaler2")
+            } else {
+                delete data.options.scaler2
+            }
             for (let i=0; i<scalers.length; i++) {
                 data.options[scalers[i]] = data.options[scalers[i]] || {}
                 data.options[scalers[i]].min = data.options[scalers[i]].min || 1
@@ -476,6 +480,10 @@ class Question extends React.Component{
                 data.options[scalers[i]].label_min = data.options[scalers[i]].label_min || "Horrible"
                 data.options[scalers[i]].label_max = data.options[scalers[i]].label_max || "Terrific"
             }
+        }
+        if (q_type==="S" || q_type==="L") {
+            delete data.options.scaler1
+            delete data.options.scaler2
         }
         this.props.handleChange(data)
     }

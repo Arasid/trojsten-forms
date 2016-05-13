@@ -16,7 +16,7 @@ tv4.addFormat('datetime', function (data, schema) {
     let datetimeRegex = /^\d\d\d\d-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])T(00|[0-9]|1[0-9]|2[0-3]):([0-9]|[0-5][0-9]):([0-9]|[0-5][0-9])Z$/
     if (typeof data !== 'string' || !datetimeRegex.test(data)) {
         // return error message
-        return 'value must be string of the form: YYYY-MM-DDTHH:mm:ssZ'
+        return 'value must be string of the form: YYYY-MM-DD[T]HH:mm:ss[Z]'
     }
     return null
 })
@@ -111,7 +111,7 @@ let formDataSchema = {
         }
     },
     "additionalProperties": false,
-    "required": ["title", "description", "deadline", "structure", "can_edit"]
+    "required": ["title", "description", "deadline", "structure"]
 }
 
 let question_schema = {
@@ -168,8 +168,7 @@ let question_schema = {
                 "q_type": { "type": "string", "enum": ["S", "L", "S1T", "S2T"] }
             },
             "required": ["q_uuid", "title", "description", "orgs", "q_type", "options", "active"],
-            "additionalProperties": false,
-
+            "additionalProperties": false
         },
         "checkOptions": {
             "oneOf": [
@@ -872,9 +871,9 @@ class MyForm extends React.Component{
                 description: "",
                 orgs: [],
                 options: {},
-                q_type: "S",
-                form: this.state.form_data.id
+                q_type: "S"
             }
+            if (state.form_data.id) new_data.form = state.form_data.id
             state.questions_data[new_id] = new_data
         }
         state.form_data.structure.splice(index,0,new_something)
@@ -950,7 +949,7 @@ class MyForm extends React.Component{
                 title: "Untitled form",
                 description: "",
                 structure: [],
-                deadline: deadline.format("YYYY-MM-DDTHH:mm:ssZ")
+                deadline: deadline.format("YYYY-MM-DD[T]HH:mm:ss[Z]")
             }
             let users = []
             for (let i = 0; i<userData.length; i++) {

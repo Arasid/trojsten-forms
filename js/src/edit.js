@@ -562,7 +562,7 @@ class Question extends React.Component{
                 </Panel>
                 <ListGroup fill={true}>
                     <FormItemControl
-                        handleDelete={(event) => this.handleDataChange('active', false)}
+                        handleDelete={(event) => this.props.handleDelete()}
                         handlePosition={this.props.handlePosition.bind(this)}
                     >
                         <FormControl
@@ -698,6 +698,13 @@ class FormList extends React.Component{
         questions_data[id] = data
         this.props.handleChange(this.props.form_data, questions_data)
     }
+    handleQuestionDelete(index) {
+        let form_data = {...this.props.form_data}
+        let data = form_data.structure.splice(index, 1)[0]
+        let questions_data = {...this.props.questions_data}
+        questions_data[data.q_uuid].active = false
+        this.props.handleChange(form_data, questions_data)
+    }
     handleHeadingChange(key, data) {
         let form_data = {...this.props.form_data}
         form_data.structure[key].data = data
@@ -706,10 +713,7 @@ class FormList extends React.Component{
     handleHeadingDelete(key) {
         let form_data = {...this.props.form_data}
         let data = form_data.structure.splice(key, 1)
-        this.props.handleChange(form_data, this.props.questions_data, {
-            valid: true,
-            q_uuid: data[0].q_uuid
-        })
+        this.props.handleChange(form_data, this.props.questions_data)
     }
     handleHeaderChange(key, data){
         let form_data = {...this.props.form_data}
@@ -731,33 +735,32 @@ class FormList extends React.Component{
         let n = this.props.form_data.structure.length
         for (let index = 0; index<n; index++) {
             let x = this.props.form_data.structure[index]
-            if (x.type !=='question' || this.props.questions_data[x.q_uuid].active) {
-                let node = <Plus key={"plus" + index} handleAdd={this.props.handleAdd.bind(this, index)}/>
-                formNodes.push(node)
+            let node = <Plus key={"plus" + index} handleAdd={this.props.handleAdd.bind(this, index)}/>
+            formNodes.push(node)
 
-                if (x.type==='question') {
-                    node = <Question 
-                                key={x.q_uuid}
-                                data={this.props.questions_data[x.q_uuid]}
-                                users={this.props.users}
-                                handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
-                                handlePosition={this.handlePosition.bind(this, index)}
-                    />
-                } else if (x.type==='section' || x.type==='title') {
-                    node = <Heading 
-                                key={x.q_uuid} 
-                                data={x.data} 
-                                type={x.type}
-                                q_uuid={x.q_uuid}
-                                handleChange={this.handleHeadingChange.bind(this, index)}
-                                handlePosition={this.handlePosition.bind(this, index)}
-                                handleDelete={this.handleHeadingDelete.bind(this, index)}
-                    />
-                }
-                formNodes.push(
-                    node
-                )
+            if (x.type==='question') {
+                node = <Question 
+                            key={x.q_uuid}
+                            data={this.props.questions_data[x.q_uuid]}
+                            users={this.props.users}
+                            handleChange={this.handleQuestionChange.bind(this, x.q_uuid)}
+                            handlePosition={this.handlePosition.bind(this, index)}
+                            handleDelete={this.handleQuestionDelete.bind(this, index)}
+                />
+            } else if (x.type==='section' || x.type==='title') {
+                node = <Heading 
+                            key={x.q_uuid} 
+                            data={x.data} 
+                            type={x.type}
+                            q_uuid={x.q_uuid}
+                            handleChange={this.handleHeadingChange.bind(this, index)}
+                            handlePosition={this.handlePosition.bind(this, index)}
+                            handleDelete={this.handleHeadingDelete.bind(this, index)}
+                />
             }
+            formNodes.push(
+                node
+            )
         }
         let node = <Plus key={"plus" + n} handleAdd={this.props.handleAdd.bind(this, n)}/>
         formNodes.push(node)
@@ -879,9 +882,7 @@ class MyForm extends React.Component{
     }
     handleChange(form_data, questions_data) {
         let valid = tv4.validate(form_data, formDataSchema) 
-        console.log(tv4.error)
         valid = valid && tv4.validate(questions_data, questionsDataSchema)
-        console.log(tv4.error)
         this.setState({
             form_data: form_data,
             questions_data: questions_data,

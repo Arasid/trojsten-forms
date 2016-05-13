@@ -92,6 +92,7 @@ class FormView(
         if formSerializer.is_valid():
             formSerializer.save()
             form = formSerializer.data
+            form['structure'] = json.loads(form['structure'])
 
             questions_data = {}
             for q, q_data in questions.items():

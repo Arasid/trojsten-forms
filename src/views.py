@@ -248,6 +248,7 @@ class FillForm(
                 a = Answer.objects.get(question=q_id, user=user)
                 a_serializer = AnswerSerializer(a, data=a_data)
             except Answer.DoesNotExist:
+                a_data['user'] = user.id
                 a_serializer = AnswerSerializer(data=a_data)
             if a_serializer.is_valid():
                 a_serializer.save()

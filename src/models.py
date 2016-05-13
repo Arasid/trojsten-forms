@@ -9,7 +9,7 @@ class Form(models.Model):
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=300, default="", blank=True)
     deadline = models.DateTimeField()
-    structure = models.CharField(max_length=2000, default="[]")
+    structure = models.CharField(max_length=200000, default="[]")
     can_edit = models.ManyToManyField(Group, blank=True, related_name="Edit")
 
     def get_can_edit(self):

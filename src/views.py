@@ -18,7 +18,7 @@ class UserViewSet(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
 
 class StaffUserViewSet(
@@ -31,7 +31,7 @@ class StaffUserViewSet(
 ):
     queryset = User.objects.filter(is_staff=True)
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
 
 class GroupViewSet(
@@ -44,7 +44,7 @@ class GroupViewSet(
 ):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
 
 class FormViewSet(
@@ -57,7 +57,7 @@ class FormViewSet(
 ):
     queryset = Form.objects.all()
     serializer_class = FormSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
 
 class QuestionViewSet(
@@ -70,7 +70,7 @@ class QuestionViewSet(
 ):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
 
 class AnswerViewSet(
@@ -83,7 +83,7 @@ class AnswerViewSet(
 ):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsStaff, )
 
     def pre_save(self, obj):
         obj.user = self.request.user

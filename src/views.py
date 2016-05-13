@@ -87,28 +87,16 @@ class FormView(
     def post(self, request, format=None):
         questions = request.data['questions']
         form = request.data['form']
-
-        structure = []
-        for x in form['structure']:
-            if x['type'] != 'question':
-                structure.append(x)
-                continue
-            if not questions[x['q_uuid']]['active']:
-                continue
-            structure.append(x)
-        form['structure'] = json.dumps(structure)
-
+        form['structure'] = json.dumps(form['structure'])
         formSerializer = FormSerializer(data=form)
         if formSerializer.is_valid():
             formSerializer.save()
             form = formSerializer.data
-            form['structure'] = json.loads(form['structure'])
 
             questions_data = {}
-            for x in form['structure']:
-                if x['type'] != 'question':
+            for q, q_data in questions.items():
+                if not q_data['active']:
                     continue
-                q_data = questions[x['q_uuid']]
                 q_data['form'] = form['id']
                 q_data['options'] = json.dumps(q_data['options'])
                 q_serializer = QuestionSerializer(data=q_data)
@@ -156,49 +144,42 @@ class FormDetail(
     def put(self, request, form_id, format=None):
         questions = request.data['questions']
         form = request.data['form']
-
-        def process_question(q_uuid):
-            q_data = questions[q_uuid]
-            q_serializer = None
-            try:
-                q_data['options'] = json.dumps(q_data['options'])
-                q = Question.objects.get(q_uuid=q_uuid)
-                # taky oser, ze ked vymazu otazku, a predtym je vymazu meno,
-                # tak do DB nemozem vlozit prazdne meno, tak necham stare
-                if len(q_data['title']) == 0:
-                    q_data['title'] = q.title
-                q_serializer = QuestionSerializer(q, data=q_data)
-            except Question.DoesNotExist:
-                if not q_data['active']:
-                    return True, None
-                q_serializer = QuestionSerializer(data=q_data)
-            if q_serializer.is_valid():
-                q_serializer.save()
-                return True, q_serializer.data
-            return False, q_serializer.errors
-
-        questions_data = {}
-        structure = []
-        for x in form['structure']:
-            if x['type'] != 'question':
-                structure.append(x)
-                continue
-            ok, q_data = process_question(x['q_uuid'])
-            if not ok:
-                # nastal problem, dalej nerobim
-                return Response(q_data, status=status.HTTP_400_BAD_REQUEST)
-            elif q_data is not None:
-                if q_data['active']:
-                    structure.append(x)
-                q_data['options'] = json.loads(q_data['options'])
-                questions_data[q_data['q_uuid']] = q_data
-
-        form['structure'] = json.dumps(structure)
+        form['structure'] = json.dumps(form['structure'])
         formSerializer = FormSerializer(Form.objects.get(pk=form_id), data=request.data['form'])
         if formSerializer.is_valid():
             formSerializer.save()
             form = formSerializer.data
             form['structure'] = json.loads(form['structure'])
+
+            def process_question(q_data):
+                q_serializer = None
+                try:
+                    q_data['options'] = json.dumps(q_data['options'])
+                    q = Question.objects.get(q_uuid=q_data['q_uuid'])
+                    # taky oser, ze ked vymazu otazku, a predtym je vymazu meno,
+                    # tak do DB nemozem vlozit prazdne meno, tak necham stare
+                    if len(q_data['title']) == 0:
+                        q_data['title'] = q.title
+                    q_serializer = QuestionSerializer(q, data=q_data)
+                except Question.DoesNotExist:
+                    if not q_data['active']:
+                        return True, None
+                    q_serializer = QuestionSerializer(data=q_data)
+                if q_serializer.is_valid():
+                    q_serializer.save()
+                    return True, q_serializer.data
+                return False, q_serializer.errors
+
+            questions_data = {}
+            for q, q_data in questions.items():
+                ok, q_data = process_question(q_data)
+                if not ok:
+                    # nastal problem, dalej nerobim
+                    return Response(q_data, status=status.HTTP_400_BAD_REQUEST)
+                elif q_data is not None:
+                    q_data['options'] = json.loads(q_data['options'])
+                    questions_data[q_data['q_uuid']] = q_data
+
             response = {
                 'form': form,
                 'questions': questions_data

@@ -47,14 +47,6 @@ class LongAnswer extends React.Component{
     }
 }
 
-class MultipleChoice extends React.Component{
-    constructor(props) {
-        super(props)
-    }
-    render() {
-    }
-}
-
 class ScaleTextAnswer extends React.Component{
     constructor(props) {
         super(props)
@@ -140,14 +132,6 @@ class Question extends React.Component{
                 ans = <LongAnswer
                             id={this.props.data.id}
                             answer={this.props.answer}
-                            handleChange={this.props.handleChange.bind(this)}
-                />
-                break
-            case "MC":
-                ans = <MultipleChoice
-                            answer={this.props.answer}
-                            id={this.props.data.id}
-                            options={this.props.data.options}
                             handleChange={this.props.handleChange.bind(this)}
                 />
                 break

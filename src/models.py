@@ -27,7 +27,6 @@ class Question(models.Model):
     Q_TYPES = (
         ('S', 'Short answer'),
         ('L', 'Long answer'),
-        ('MC', 'Multiple choice'),
         ('S1T', 'Scale with text answer'),
         ('S2T', 'Two scales with text answer'),
     )

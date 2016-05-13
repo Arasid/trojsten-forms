@@ -277,15 +277,6 @@ class LongAnswer extends React.Component{
     }
 }
 
-class MultipleChoice extends React.Component{
-    // Accordions -- react-bootstrap
-    constructor(props) {
-        super(props)
-    }
-    render() {
-    }
-}
-
 class ScaleTextAnswer extends React.Component{
     constructor(props) {
         super(props)
@@ -510,12 +501,6 @@ class Question extends React.Component{
             case "L":
                 ans = <LongAnswer/>
                 break
-            case "MC":
-                ans = <MultipleChoice
-                            options={this.props.data.options}
-                            handleChange={this.handleDataChange.bind(this, 'options')}
-                />
-                break
             case "S1T":
                 ans = <ScaleTextAnswer options={this.props.data.options} />
                 opt = <OneScalerOption
@@ -572,7 +557,6 @@ class Question extends React.Component{
                         >
                             <option value="S">Short answer</option>
                             <option value="L">Long answer</option>
-                            <option value="MC">Multiple choice</option>
                             <option value="S1T">Scale with text answer</option>
                             <option value="S2T">Two scales with text answer</option>
                         </FormControl>

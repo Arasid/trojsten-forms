@@ -25,9 +25,6 @@ class TableHeader extends React.Component{
                     case "L":
                         node = <th key={q.q_uuid}>{question.title}</th>
                         break
-                    case "MC":
-                        node = <th key={q.q_uuid}>{question.title}</th>
-                        break
                     case "S1T":
                         node = <th colSpan="2" key={q.q_uuid}>{question.title}</th>
                         break

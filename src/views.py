@@ -21,6 +21,19 @@ class UserViewSet(
     permission_classes = (IsAuthenticated,)
 
 
+class StaffUserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = User.objects.filter(is_staff=True)
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+
+
 class GroupViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,

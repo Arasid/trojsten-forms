@@ -908,11 +908,11 @@ class MyForm extends React.Component{
     }
     getUsersPromise() {
         return $.ajax({
-            url: "/api/user/",
+            url: "/api/staff_user/",
             dataType: 'json',
             cache: false,
         }).fail( function(xhr, status, err) {
-            console.error("/api/user/", status, err.toString())
+            console.error("/api/staff_user/", status, err.toString())
         })
     }
     getGroupsPromise() {
